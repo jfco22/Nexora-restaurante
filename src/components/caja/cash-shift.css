@@ -1,0 +1,29 @@
+button.open-register { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; transition: background .15s ease; }
+button.open-register:hover { background: #e4f0dc; }
+.open-register.closed { color: #7a4d0c; background: #fdf4e3; }
+.open-register.closed:hover { background: #f9ebcf; }
+.open-register.closed .status-dot { background: #d9a441; }
+
+.cash-modal { width: min(460px, 100%); }
+.cash-body { display: flex; flex-direction: column; gap: 16px; padding: 16px 22px 22px; }
+.cash-intro { margin: 0; font-size: .85rem; line-height: 1.5; color: #5f6b63; }
+.cash-body > label { display: flex; flex-direction: column; gap: 6px; font-size: .76rem; font-weight: 600; color: #4e5b52; }
+.cash-body > label input { padding: 11px 12px; border: 1px solid #d9e0da; border-radius: 10px; font: inherit; color: #2a332e; }
+.cash-body > label input:focus { outline: 2px solid #9cc3a8; outline-offset: 1px; }
+
+.cash-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; }
+.cash-summary > div { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 11px; background: #f7faf5; }
+.cash-summary dt { display: flex; align-items: center; gap: 6px; font-size: .72rem; color: #758179; }
+.cash-summary dd { margin: 0; font-size: 1rem; font-weight: 600; color: #2a332e; }
+.cash-summary .cash-expected { grid-column: 1 / -1; background: #e9f3ec; }
+.cash-summary .cash-expected dd { font-size: 1.4rem; color: #1f5a3c; }
+
+.cash-warning { margin: 0; padding: 12px 14px; border-radius: 11px; background: #fdf4e3; color: #7a4d0c; font-size: .8rem; line-height: 1.45; }
+.cash-difference { margin: -6px 0 0; font-size: .85rem; font-weight: 600; }
+.cash-difference.even, .cash-result .even { color: #1f5a3c; }
+.cash-difference.over, .cash-result .over { color: #1d4f7a; }
+.cash-difference.short, .cash-result .short { color: #9a2f2f; }
+
+.cash-result { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0; text-align: center; color: #2a332e; }
+.cash-result p { margin: 0; font-size: .95rem; }
+.cash-result strong { font-size: 1.3rem; }

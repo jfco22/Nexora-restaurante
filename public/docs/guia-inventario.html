@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexora - Guía de Importación de Inventario</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #27312d; background: #f6f8f5; line-height: 1.6; padding: 40px 20px; }
+  .doc { max-width: 780px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 48px; box-shadow: 0 4px 24px rgba(36,53,43,.06); }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+  .brand-mark { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 10px; color: #fff; background: #d45a3d; font-size: 1.2rem; font-weight: 800; }
+  .brand-name { font-size: 1.3rem; font-weight: 800; letter-spacing: -.03em; }
+  h1 { font-size: 1.8rem; letter-spacing: -.04em; margin-bottom: 8px; }
+  .subtitle { color: #8a958e; font-size: .9rem; margin-bottom: 32px; }
+  h2 { font-size: 1.15rem; margin-top: 28px; margin-bottom: 12px; color: #354038; }
+  p { font-size: .88rem; color: #4e5b52; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th { text-align: left; padding: 10px 12px; color: #68756d; font-size: .78rem; font-weight: 700; border-bottom: 2px solid #e0e5df; }
+  td { padding: 9px 12px; border-bottom: 1px solid #edf1ec; font-size: .82rem; }
+  .req-yes { color: #d9593b; font-weight: 700; }
+  .req-no { color: #91b936; font-weight: 600; }
+  .example { background: #f6f8f5; border-radius: 10px; padding: 16px; margin: 16px 0; }
+  .example h3 { font-size: .85rem; margin-bottom: 8px; color: #354038; }
+  .example table th { border-bottom: 1px solid #dfe5dc; }
+  .note { padding: 14px 16px; border-radius: 10px; background: #fff7f4; border: 1px solid #f2d7ce; color: #a64d38; font-size: .82rem; margin: 16px 0; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #edf1ec; color: #a0aaa3; font-size: .75rem; text-align: center; }
+  @media print { body { background: #fff; padding: 0; } .doc { box-shadow: none; border-radius: 0; padding: 32px; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="brand"><span class="brand-mark">N</span><span class="brand-name">Nexora</span></div>
+  <h1>Guía de Importación de Inventario</h1>
+  <p class="subtitle">Formato de archivo Excel (.xls / .xlsx) para importar insumos al sistema</p>
+
+  <h2>Campos del archivo</h2>
+  <p>El archivo debe tener una fila por cada insumo, con las siguientes columnas en la primera hoja:</p>
+
+  <table>
+    <thead><tr><th>Columna</th><th>Obligatorio</th><th>Valores aceptados</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td>Nombre</td><td class="req-yes">Sí</td><td>Texto</td><td>Nombre del insumo (ej. "Carne res molida")</td></tr>
+      <tr><td>Unidad</td><td class="req-yes">Sí</td><td>g, kg, ml, l, unidad</td><td>Unidad de medida. También acepta: gramos, kilos, mililitros, litros, unidades</td></tr>
+      <tr><td>Ubicación</td><td class="req-yes">Sí</td><td>nevera, estanteria, bodega</td><td>Dónde se guarda el insumo</td></tr>
+      <tr><td>Stock actual</td><td class="req-yes">Sí</td><td>Número positivo o cero</td><td>Conteo físico actual del insumo</td></tr>
+      <tr><td>Stock mínimo</td><td class="req-no">No</td><td>Número (0 si vacío)</td><td>Nivel mínimo para alertas de reposición</td></tr>
+      <tr><td>Costo unitario (COP)</td><td class="req-no">No</td><td>Número en pesos (0 si vacío)</td><td>Costo por unidad en pesos colombianos</td></tr>
+      <tr><td>Cantidad comprada</td><td class="req-no">No</td><td>Número (vacío = sin compra)</td><td>Si se llena, registra un movimiento de compra en el historial</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    Si un insumo ya existe por nombre (sin distinguir mayúsculas), se actualizan sus datos y su stock se ajusta al valor del archivo. Si no existe, se crea. Cada cambio de stock queda registrado en el historial de movimientos.
+  </div>
+
+  <h2>Ejemplo</h2>
+  <div class="example">
+    <h3>Filas de ejemplo</h3>
+    <table>
+      <thead><tr><th>Nombre</th><th>Unidad</th><th>Ubicación</th><th>Stock actual</th><th>Stock mínimo</th><th>Costo unitario (COP)</th><th>Cantidad comprada</th></tr></thead>
+      <tbody>
+        <tr><td>Carne res molida</td><td>kg</td><td>nevera</td><td>10</td><td>2</td><td>18000</td><td></td></tr>
+        <tr><td>Pan hamburguesa</td><td>unidad</td><td>estanteria</td><td>24</td><td>10</td><td>800</td><td></td></tr>
+        <tr><td>Coca-Cola 250ml</td><td>unidad</td><td>bodega</td><td>25</td><td>12</td><td>1500</td><td>24</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Preguntas frecuentes</h2>
+  <p><strong>¿Qué pasa con los insumos que no están en el archivo?</strong> No se modifican. Mantienen su stock y datos actuales.</p>
+  <p><strong>¿Qué pasa si una fila tiene errores?</strong> Las filas con errores se omiten y se muestran en el resumen después de la importación. Las filas válidas se importan normalmente.</p>
+  <p><strong>¿Puedo usar otras palabras para la unidad?</strong> Sí. El sistema reconoce: gramos, gramo, gr, kilos, kilo, mililitros, mililitro, litros, litro, unidades, unidad, und.</p>
+
+  <div class="footer">Nexora Restaurant OS · Guía de importación de inventario · 2026</div>
+</div>
+</body>
+</html>

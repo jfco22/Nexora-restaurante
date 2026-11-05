@@ -1,0 +1,24 @@
+.kitchen-steps {
+  margin: 0;
+  padding: 12px 0 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid #ece8e2;
+}
+
+.kitchen-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7a837e;
+  font-size: 0.8125rem;
+}
+
+.kitchen-steps li.done {
+  color: #1f2421;
+}
+
+.kitchen-steps li.done svg {
+  color: #2f7d4f;
+}

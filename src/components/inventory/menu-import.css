@@ -1,0 +1,29 @@
+.import-actions-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.import-actions-row .outline-button { flex: 1; min-width: 160px; }
+.import-guide-link { display: inline-block; margin-top: 10px; color: #c75236; font-size: .8rem; font-weight: 600; text-decoration: underline; }
+.import-guide-link:hover { color: #a64d38; }
+
+.menu-crud-dialog { width: min(900px, 100%); }
+
+.import-preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 12px; }
+.import-preview-header h3 { margin: 0; font-size: .9rem; font-weight: 700; color: #27312d; }
+
+.crud-row-actions { display: flex; gap: 4px; }
+
+.crud-input {
+  width: 100%;
+  min-width: 60px;
+  padding: 5px 7px;
+  border: 1px solid #dfe7df;
+  border-radius: 6px;
+  color: #27312d;
+  background: #fff;
+  font-size: .78rem;
+}
+
+.crud-input:focus { outline: 0; border-color: #d45a3d; }
+
+.delete-confirm-cell { color: #a64d38; font-size: .8rem; font-weight: 600; }
+
+.import-preview-table td input[type="number"] { max-width: 90px; }
+.import-preview-table td select { max-width: 70px; }

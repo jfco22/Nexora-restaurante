@@ -1,0 +1,45 @@
+.product-card.sold-out img {
+  filter: grayscale(0.7);
+  opacity: 0.6;
+}
+
+.sold-out-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: #f3f1ee;
+  color: #6b6f6c;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.guest-payment-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: #65726a;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.guest-message {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.guest-message.success {
+  background: #eef7f1;
+  color: #2f6b45;
+}
+
+.guest-message.error {
+  background: #fdf1ee;
+  color: #b4482d;
+}

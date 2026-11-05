@@ -1,0 +1,72 @@
+.inventory-page { display: flex; flex-direction: column; gap: 24px; }
+
+.inventory-tabs { display: inline-flex; gap: 4px; padding: 4px; align-self: flex-start; border-radius: 12px; background: #f1f4f0; }
+.inventory-tabs button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border: 0; border-radius: 9px; background: transparent; color: #5f6b63; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.inventory-tabs button:hover { color: #2a332e; }
+.inventory-tabs button.selected { background: #fff; color: #1f5a3c; box-shadow: 0 1px 3px rgba(31, 41, 36, 0.12); }
+
+.inventory-section { display: flex; flex-direction: column; gap: 20px; animation: account-fade .2s ease; }
+.inventory-intro { margin: 0; font-size: .85rem; line-height: 1.5; color: #5f6b63; }
+.inventory-toolbar { display: flex; justify-content: flex-end; }
+.inventory-toolbar .primary-button { display: inline-flex; align-items: center; gap: 7px; }
+.inventory-empty { margin: 0; padding: 24px 0; text-align: center; color: #9ca69f; font-size: .85rem; }
+
+.inventory-group { display: flex; flex-direction: column; gap: 10px; }
+.inventory-group h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .78rem; font-weight: 600; color: #758179; text-transform: uppercase; letter-spacing: .04em; }
+.inventory-group h2 span { padding: 2px 8px; border-radius: 999px; background: #edf2ec; color: #5f6b63; font-size: .72rem; }
+
+.inventory-list, .recipe-list, .shopping-list, .recipe-lines { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+.inventory-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 14px 16px; border: 1px solid #e6ebe5; border-radius: 12px; background: #fff; transition: border-color .15s ease, box-shadow .15s ease; }
+.inventory-row:hover { border-color: #cfd9cc; box-shadow: 0 4px 14px rgba(31, 41, 36, 0.06); }
+.inventory-name, .inventory-stock, .shopping-list li > div:first-child, .recipe-lines li > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.inventory-name strong, .inventory-stock strong, .recipe-lines strong, .recipe-row strong, .shopping-list strong { font-size: .92rem; color: #2a332e; }
+.inventory-name small, .inventory-stock small, .recipe-lines small, .recipe-row small, .shopping-list small { font-size: .74rem; color: #758179; }
+.inventory-stock { text-align: right; }
+.inventory-stock strong { font-variant-numeric: tabular-nums; }
+.inventory-actions { display: flex; align-items: center; gap: 6px; }
+.inventory-actions .outline-button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; font-size: .8rem; }
+
+.inventory-status { padding: 4px 10px; border-radius: 999px; font-size: .72rem; font-weight: 600; white-space: nowrap; }
+.inventory-status.ok { background: #e7f3e9; color: #1f5a3c; }
+.inventory-status.low { background: #fdf4e3; color: #7a4d0c; }
+.inventory-status.negative { background: #fbeaea; color: #9a2f2f; }
+
+.inventory-modal { width: min(520px, 100%); }
+.inventory-form { display: flex; flex-direction: column; gap: 16px; padding: 16px 22px; }
+.inventory-form > label, .recipe-add label { display: flex; flex-direction: column; gap: 6px; font-size: .76rem; font-weight: 600; color: #4e5b52; }
+.inventory-form input, .inventory-form select, .recipe-add input, .recipe-add select { padding: 11px 12px; border: 1px solid #d9e0da; border-radius: 10px; font: inherit; font-weight: 400; color: #2a332e; background: #fff; }
+.inventory-form input:focus, .inventory-form select:focus, .recipe-add input:focus, .recipe-add select:focus { outline: 2px solid #9cc3a8; outline-offset: 1px; }
+.inventory-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.inventory-form-footer { padding: 0 22px 22px; }
+.inventory-form-footer .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.inventory-preview { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 11px; background: #f7faf5; }
+.inventory-preview span, .inventory-preview small { font-size: .74rem; color: #758179; }
+.inventory-preview strong { font-size: 1rem; color: #1f5a3c; }
+
+.recipe-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 14px 16px; border: 1px solid #e6ebe5; border-radius: 12px; background: #fff; color: #5f6b63; text-align: left; font: inherit; cursor: pointer; transition: border-color .15s ease, transform .15s ease; }
+.recipe-row:hover { border-color: #9cc3a8; transform: translateX(2px); }
+.recipe-row > div { display: flex; flex-direction: column; gap: 3px; }
+.recipe-missing { color: #9a5b0c !important; font-weight: 600; }
+.recipe-lines li { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 10px; background: #f7faf5; }
+.recipe-add { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; border-top: 1px solid #edf0ec; }
+.recipe-add-title { margin: 0; font-size: .78rem; font-weight: 600; color: #4e5b52; }
+.recipe-add .outline-button { display: inline-flex; align-items: center; justify-content: center; }
+
+.shopping-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.shopping-summary > div { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 12px; background: #f7faf5; }
+.shopping-summary span { font-size: .74rem; color: #758179; }
+.shopping-summary strong { font-size: 1.4rem; color: #1f5a3c; }
+.shopping-list li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid #e6ebe5; border-radius: 12px; background: #fff; }
+.shopping-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.shopping-amount strong { font-variant-numeric: tabular-nums; }
+.inventory-all-set { display: flex; align-items: center; gap: 12px; padding: 20px; border-radius: 12px; background: #e9f3ec; color: #1f5a3c; }
+.inventory-all-set p { margin: 0; font-size: .9rem; }
+
+@media (max-width: 720px) {
+  .inventory-row { grid-template-columns: 1fr auto; }
+  .inventory-stock { text-align: left; }
+  .inventory-status { justify-self: start; }
+  .inventory-actions { grid-column: 1 / -1; }
+  .inventory-form-row { grid-template-columns: 1fr; }
+}

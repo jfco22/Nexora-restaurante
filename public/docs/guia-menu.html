@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexora - Guía de Importación de Menú</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #27312d; background: #f6f8f5; line-height: 1.6; padding: 40px 20px; }
+  .doc { max-width: 780px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 48px; box-shadow: 0 4px 24px rgba(36,53,43,.06); }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+  .brand-mark { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 10px; color: #fff; background: #d45a3d; font-size: 1.2rem; font-weight: 800; }
+  .brand-name { font-size: 1.3rem; font-weight: 800; letter-spacing: -.03em; }
+  h1 { font-size: 1.8rem; letter-spacing: -.04em; margin-bottom: 8px; }
+  .subtitle { color: #8a958e; font-size: .9rem; margin-bottom: 32px; }
+  h2 { font-size: 1.15rem; margin-top: 28px; margin-bottom: 12px; color: #354038; }
+  p { font-size: .88rem; color: #4e5b52; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th { text-align: left; padding: 10px 12px; color: #68756d; font-size: .78rem; font-weight: 700; border-bottom: 2px solid #e0e5df; }
+  td { padding: 9px 12px; border-bottom: 1px solid #edf1ec; font-size: .82rem; }
+  .req-yes { color: #d9593b; font-weight: 700; }
+  .req-no { color: #91b936; font-weight: 600; }
+  .example { background: #f6f8f5; border-radius: 10px; padding: 16px; margin: 16px 0; }
+  .example h3 { font-size: .85rem; margin-bottom: 8px; color: #354038; }
+  .example table th { border-bottom: 1px solid #dfe5dc; }
+  .note { padding: 14px 16px; border-radius: 10px; background: #fff7f4; border: 1px solid #f2d7ce; color: #a64d38; font-size: .82rem; margin: 16px 0; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #edf1ec; color: #a0aaa3; font-size: .75rem; text-align: center; }
+  @media print { body { background: #fff; padding: 0; } .doc { box-shadow: none; border-radius: 0; padding: 32px; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="brand"><span class="brand-mark">N</span><span class="brand-name">Nexora</span></div>
+  <h1>Guía de Importación de Menú</h1>
+  <p class="subtitle">Formato de archivo Excel (.xls / .xlsx) para importar productos y categorías al sistema</p>
+
+  <h2>Campos del archivo</h2>
+  <p>El archivo debe tener una fila por cada producto, con las siguientes columnas en la primera hoja:</p>
+
+  <table>
+    <thead><tr><th>Columna</th><th>Obligatorio</th><th>Valores aceptados</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td>Categoría</td><td class="req-yes">Sí</td><td>Texto</td><td>Nombre de la categoría (ej. "Entradas", "Hamburguesas"). Si no existe, se crea automáticamente.</td></tr>
+      <tr><td>Nombre</td><td class="req-yes">Sí</td><td>Texto</td><td>Nombre del producto (ej. "Birria Burger")</td></tr>
+      <tr><td>Descripción</td><td class="req-no">No</td><td>Texto breve</td><td>Descripción del plato que verán los clientes</td></tr>
+      <tr><td>Precio (COP)</td><td class="req-yes">Sí</td><td>Número entero mayor a 0</td><td>Precio en pesos colombianos</td></tr>
+      <tr><td>Imagen URL</td><td class="req-no">No</td><td>Dirección web (URL)</td><td>Enlace a la foto del producto. Si se deja vacío, se usa una imagen por defecto.</td></tr>
+      <tr><td>Disponible</td><td class="req-no">No</td><td>Sí / No (vacío = Sí)</td><td>Si el producto está disponible para venderse</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    Si un producto ya existe por nombre (sin distinguir mayúsculas), se actualizan su precio, descripción, imagen y disponibilidad. Si no existe, se crea. Las categorías se crean automáticamente si no existen.
+  </div>
+
+  <h2>Ejemplo</h2>
+  <div class="example">
+    <h3>Filas de ejemplo</h3>
+    <table>
+      <thead><tr><th>Categoría</th><th>Nombre</th><th>Descripción</th><th>Precio (COP)</th><th>Imagen URL</th><th>Disponible</th></tr></thead>
+      <tbody>
+        <tr><td>Entradas</td><td>Nachos Supremos</td><td>Totopos con queso, guacamole y pico de gallo</td><td>18000</td><td></td><td>Sí</td></tr>
+        <tr><td>Hamburguesas</td><td>Birria Burger</td><td>Hamburguesa de birria con queso y consomé</td><td>28000</td><td></td><td>Sí</td></tr>
+        <tr><td>Bebidas</td><td>Coca-Cola 250ml</td><td>Lata de 250ml</td><td>5000</td><td></td><td>Sí</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Preguntas frecuentes</h2>
+  <p><strong>¿Qué pasa con los productos que no están en el archivo?</strong> No se modifican. Mantienen su precio y datos actuales.</p>
+  <p><strong>¿Qué pasa si una fila tiene errores?</strong> Las filas con errores se omiten y se muestran en el resumen. Las filas válidas se importan normalmente.</p>
+  <p><strong>¿Puedo exportar el menú actual?</strong> Sí. En el diálogo de importar menú hay un botón "Exportar menú actual" que descarga un Excel con todos los productos existentes.</p>
+
+  <div class="footer">Nexora Restaurant OS · Guía de importación de menú · 2026</div>
+</div>
+</body>
+</html>

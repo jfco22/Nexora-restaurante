@@ -1,0 +1,126 @@
+.cashier-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.cashier-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid #e6e2dc;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #1f2421;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.cashier-card:hover {
+  box-shadow: 0 8px 24px rgba(31, 36, 33, 0.08);
+  transform: translateY(-2px);
+}
+
+.cashier-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cashier-card-top strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.cashier-guest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: #5d6660;
+  font-size: 0.875rem;
+}
+
+.cashier-total {
+  font-size: 1.15rem;
+  white-space: nowrap;
+}
+
+.cashier-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  color: #3d4540;
+  font-size: 0.925rem;
+}
+
+.cashier-items b {
+  color: #1f2421;
+}
+
+.cashier-methods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.cashier-methods button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #d8d3cc;
+  border-radius: 10px;
+  background: #faf9f7;
+  color: #1f2421;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.cashier-methods button:hover {
+  border-color: #1f2421;
+}
+
+.cashier-methods button.selected {
+  border-color: #1f2421;
+  background: #1f2421;
+  color: #ffffff;
+}
+
+.cashier-reference {
+  display: grid;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #3d4540;
+}
+
+.cashier-reference input {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d8d3cc;
+  border-radius: 10px;
+  font: inherit;
+  color: #1f2421;
+}
+
+.cashier-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  border: 1px dashed #d8d3cc;
+  border-radius: 16px;
+  color: #5d6660;
+  text-align: center;
+}
+
+.cashier-empty strong {
+  color: #1f2421;
+}
