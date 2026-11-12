@@ -84,26 +84,50 @@ Deno.serve(async (req: Request): Promise<Response> => {
       user_metadata: { display_name: parsed.display_name },
     });
     if (createError || !created.user) {
-      const alreadyExists = createError?.message?.toLowerCase().includes("already");
-      return json(
-        { error: alreadyExists ? "Ya existe un usuario con ese correo" : "No pudimos crear el usuario" },
-        alreadyExists ? 409 : 500,
-      );
+      const authError = createError as (Error & { code?: string; status?: number }) | null;
+      const code = authError?.code ?? "";
+      const lower = (authError?.message ?? "").toLowerCase();
+      // Keep the real reason in the function logs: the user only sees a friendly message.
+      console.error("create-staff-user: createUser failed", { code, status: authError?.status, message: authError?.message });
+
+      if (code === "email_exists" || code === "user_already_exists" || lower.includes("already")) {
+        return json({ error: "Ya existe un usuario con ese correo", code: "email_exists" }, 409);
+      }
+      if (code === "weak_password" || lower.includes("password")) {
+        return json({ error: "La contraseña no cumple las reglas de seguridad. Usa una más larga, con letras y números", code: "weak_password" }, 400);
+      }
+      if (code === "email_provider_disabled" || lower.includes("provider")) {
+        return json({ error: "El acceso con correo está desactivado en Supabase (Authentication, Providers, Email)", code: "email_provider_disabled" }, 500);
+      }
+      if (lower.includes("database error")) {
+        return json({ error: "Supabase no pudo guardar el perfil del nuevo usuario. Revisa el disparador on_nexora_auth_user_created", code: "database_error" }, 500);
+      }
+      return json({ error: "No pudimos crear el usuario", code: code || "create_failed" }, 500);
     }
 
     const newUserId = created.user.id;
-    const { error: profileError } = await admin
+    const profileValues = { display_name: parsed.display_name, role: parsed.role, updated_at: new Date().toISOString() };
+    const { data: updatedRows, error: profileError } = await admin
       .from("nexora_profiles")
-      .update({ display_name: parsed.display_name, role: parsed.role, updated_at: new Date().toISOString() })
-      .eq("id", newUserId);
-    if (profileError) {
+      .update(profileValues)
+      .eq("id", newUserId)
+      .select("id");
+
+    let profileFailure: unknown = profileError;
+    if (!profileFailure && (!updatedRows || updatedRows.length === 0)) {
+      // The profile row was not there (the signup trigger did not create it): create it so the role is not lost.
+      const { error: insertError } = await admin.from("nexora_profiles").insert({ id: newUserId, ...profileValues });
+      profileFailure = insertError;
+    }
+    if (profileFailure) {
+      console.error("create-staff-user: profile setup failed", profileFailure);
       await admin.auth.admin.deleteUser(newUserId);
-      return json({ error: "No pudimos configurar el perfil del usuario" }, 500);
+      return json({ error: "No pudimos configurar el perfil del usuario", code: "profile_failed" }, 500);
     }
 
     return json({ user_id: newUserId, email: parsed.email, role: parsed.role }, 201);
   } catch (cause) {
     console.error("create-staff-user failed", cause);
-    return json({ error: "Error interno al crear el usuario" }, 500);
+    return json({ error: "Error interno al crear el usuario", code: "internal_error" }, 500);
   }
 });

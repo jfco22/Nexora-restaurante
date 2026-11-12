@@ -46,13 +46,19 @@ export function CreateStaffDialog({ callerRole, onClose, onCreated }: CreateStaf
       });
       const body: unknown = await response.json().catch(() => null);
       if (!response.ok) {
-        const message = typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string' ? body.error : 'No pudimos crear el usuario. Inténtalo de nuevo.';
-        setError(message);
+        const serverMessage = typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string' ? body.error : null;
+        if (serverMessage) {
+          setError(serverMessage);
+        } else if (response.status === 404) {
+          setError('La función create-staff-user no está desplegada en Supabase. Despliégala desde Bolt e inténtalo de nuevo.');
+        } else {
+          setError(`El servidor respondió con un error (código ${response.status}). Inténtalo de nuevo.`);
+        }
         return;
       }
       onCreated();
     } catch {
-      setError('No pudimos conectar con el servidor. Revisa la conexión e inténtalo de nuevo.');
+      setError('No pudimos comunicarnos con la función de creación de usuarios. Revisa la conexión; si la conexión está bien, es probable que la función create-staff-user no esté desplegada en Supabase.');
     } finally {
       setBusy(false);
     }
