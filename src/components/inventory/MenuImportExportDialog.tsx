@@ -3,6 +3,8 @@ import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertTriangle, X, Tras
 import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabase';
 import { userFacingError } from '@/lib/tableAccount';
+import { csvToObjects, decodeCsvBytes, downloadCsv, parsePriceCop, toCsv } from '@/lib/importParsing';
+import '@/components/inventory/menu-import.css';
 
 type MenuRow = {
   category: string;
@@ -35,6 +37,10 @@ type ExistingProduct = {
 
 type Tab = 'import' | 'manage';
 
+type ParsedMenu = { rows: MenuRow[]; missingColumns: string[] };
+
+const MENU_HEADERS = ['Categoría', 'Nombre', 'Descripción', 'Precio (COP)', 'Imagen URL', 'Disponible'];
+
 const FIELD_MAP: Record<string, keyof MenuRow> = {
   'categoria': 'category', 'categoría': 'category', 'category': 'category',
   'nombre': 'name', 'nombre del producto': 'name', 'producto': 'name',
@@ -48,18 +54,11 @@ function normalizeHeader(header: string): string {
   return header.toLowerCase().trim();
 }
 
-function parseNumeric(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') return null;
-  if (typeof value === 'number') return value;
-  const cleaned = String(value).replace(/[^0-9.-]/g, '');
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? null : parsed;
-}
-
 function parseBoolean(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
   const str = String(value).toLowerCase().trim();
-  return str !== 'no' && str !== 'false' && str !== '0' && str !== '';
+  // An empty cell means "Sí", as the on-screen guide says; otherwise products would be imported hidden from customers.
+  return str !== 'no' && str !== 'false' && str !== '0';
 }
 
 function validateRow(category: string, name: string, price: number | null): string[] {
@@ -71,12 +70,14 @@ function validateRow(category: string, name: string, price: number | null): stri
   return errors;
 }
 
-function parseWorkbook(workbook: XLSX.WorkBook): MenuRow[] {
+function parseWorkbook(workbook: XLSX.WorkBook): ParsedMenu {
   const sheetName = workbook.SheetNames[0];
-  if (!sheetName) return [];
+  if (!sheetName) return { rows: [], missingColumns: [] };
   const sheet = workbook.Sheets[sheetName];
-  const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
+  return parseRawRows(XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' }));
+}
 
+function parseRawRows(rawRows: Record<string, unknown>[]): ParsedMenu {
   const headerMap = new Map<string, keyof MenuRow>();
   if (rawRows.length > 0) {
     Object.keys(rawRows[0]).forEach((header: string) => {
@@ -85,7 +86,13 @@ function parseWorkbook(workbook: XLSX.WorkBook): MenuRow[] {
     });
   }
 
-  return rawRows.map((rawRow: Record<string, unknown>): MenuRow => {
+  const foundFields = new Set<keyof MenuRow>(headerMap.values());
+  const missingColumns: string[] = [];
+  if (!foundFields.has('category')) missingColumns.push('Categoría');
+  if (!foundFields.has('name')) missingColumns.push('Nombre');
+  if (!foundFields.has('price_cop')) missingColumns.push('Precio (COP)');
+
+  const rows = rawRows.map((rawRow: Record<string, unknown>): MenuRow => {
     const mapped: Partial<MenuRow> = { _errors: [] };
     for (const [originalHeader, fieldKey] of headerMap) {
       mapped[fieldKey] = rawRow[originalHeader] as never;
@@ -94,7 +101,7 @@ function parseWorkbook(workbook: XLSX.WorkBook): MenuRow[] {
     const category = String(mapped.category ?? '').trim();
     const name = String(mapped.name ?? '').trim();
     const description = String(mapped.description ?? '').trim();
-    const price = parseNumeric(mapped.price_cop);
+    const price = parsePriceCop(mapped.price_cop);
     const image_url = String(mapped.image_url ?? '').trim();
     const is_available = parseBoolean(mapped.is_available);
 
@@ -108,6 +115,7 @@ function parseWorkbook(workbook: XLSX.WorkBook): MenuRow[] {
       _errors: validateRow(category, name, price),
     };
   });
+  return { rows, missingColumns };
 }
 
 function makeEmptyRow(): MenuRow {
@@ -178,18 +186,26 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
     setServerError(null);
     setFileName(file.name);
 
+    const isCsv = /\.(csv|txt)$/i.test(file.name);
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>): void => {
       try {
-        const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: 'array' });
-        const parsed = parseWorkbook(workbook);
-        if (parsed.length === 0) {
-          setParseError('El archivo no tiene filas con datos o las columnas no coinciden con el formato esperado.');
+        const data = e.target?.result as ArrayBuffer;
+        // CSV and text files use our own reader: it keeps accents, accepts "," or ";" as separator and reads prices like "15.000".
+        const parsed: ParsedMenu = isCsv
+          ? parseRawRows(csvToObjects(decodeCsvBytes(data)))
+          : parseWorkbook(XLSX.read(data, { type: 'array' }));
+        if (parsed.rows.length === 0) {
+          setParseError('El archivo no tiene filas con datos.');
           setRows([]);
           return;
         }
-        setRows(parsed);
+        if (parsed.missingColumns.length > 0) {
+          setParseError(`No encontramos estas columnas en la primera fila: ${parsed.missingColumns.join(', ')}. Revisa los nombres o descarga la plantilla.`);
+          setRows([]);
+          return;
+        }
+        setRows(parsed.rows);
       } catch {
         setParseError('No pudimos leer el archivo. Asegúrate de que sea un archivo válido (.xls, .xlsx, .csv o .txt).');
         setRows([]);
@@ -234,7 +250,7 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
     onImported();
   };
 
-  const handleExport = async (): Promise<void> => {
+  const handleExport = async (format: 'xlsx' | 'csv'): Promise<void> => {
     setBusy(true);
     setServerError(null);
 
@@ -263,18 +279,27 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
       'Disponible': p.is_available ? 'Sí' : 'No',
     }));
 
+    if (format === 'csv') {
+      downloadCsv('nexora-menu.csv', toCsv(MENU_HEADERS, exportRows.map((row) => MENU_HEADERS.map((header: string) => row[header as keyof typeof row]))));
+      return;
+    }
+
     const ws = XLSX.utils.json_to_sheet(exportRows.length > 0 ? exportRows : [{ 'Categoría': '', 'Nombre': '', 'Descripción': '', 'Precio (COP)': '', 'Imagen URL': '', 'Disponible': '' }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Menú');
     XLSX.writeFile(wb, 'nexora-menu.xlsx');
   };
 
-  const handleDownloadTemplate = (): void => {
+  const handleDownloadTemplate = (format: 'xlsx' | 'csv'): void => {
     const templateRows = [
       { 'Categoría': 'Entradas', 'Nombre': 'Nachos Supremos', 'Descripción': 'Totopos con queso, guacamole y pico de gallo', 'Precio (COP)': 18000, 'Imagen URL': '', 'Disponible': 'Sí' },
       { 'Categoría': 'Hamburguesas', 'Nombre': 'Birria Burger', 'Descripción': 'Hamburguesa de birria con queso y consomé', 'Precio (COP)': 28000, 'Imagen URL': '', 'Disponible': 'Sí' },
       { 'Categoría': 'Bebidas', 'Nombre': 'Coca-Cola 250ml', 'Descripción': 'Lata de 250ml', 'Precio (COP)': 5000, 'Imagen URL': '', 'Disponible': 'Sí' },
     ];
+    if (format === 'csv') {
+      downloadCsv('plantilla-menu-nexora.csv', toCsv(MENU_HEADERS, templateRows.map((row) => MENU_HEADERS.map((header: string) => row[header as keyof typeof row]))));
+      return;
+    }
     const ws = XLSX.utils.json_to_sheet(templateRows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Menú');
@@ -408,11 +433,17 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
         {tab === 'import' && (
           <>
             <div className="import-actions-row">
-              <button className="outline-button" type="button" onClick={() => handleExport()} disabled={busy}>
-                <Download size={16} /> Exportar menú actual
+              <button className="outline-button" type="button" onClick={() => void handleExport('xlsx')} disabled={busy}>
+                <Download size={16} /> Exportar menú (Excel)
               </button>
-              <button className="outline-button" type="button" onClick={handleDownloadTemplate}>
-                <FileSpreadsheet size={16} /> Descargar plantilla
+              <button className="outline-button" type="button" onClick={() => void handleExport('csv')} disabled={busy}>
+                <Download size={16} /> Exportar menú (CSV)
+              </button>
+              <button className="outline-button" type="button" onClick={() => handleDownloadTemplate('xlsx')}>
+                <FileSpreadsheet size={16} /> Plantilla Excel
+              </button>
+              <button className="outline-button" type="button" onClick={() => handleDownloadTemplate('csv')}>
+                <FileSpreadsheet size={16} /> Plantilla CSV
               </button>
             </div>
 
@@ -424,12 +455,12 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
                   <tr><td>Categoría</td><td className="required">Sí</td><td>Texto (ej. Entradas, Hamburguesas)</td></tr>
                   <tr><td>Nombre</td><td className="required">Sí</td><td>Texto del producto</td></tr>
                   <tr><td>Descripción</td><td>No</td><td>Texto breve del plato</td></tr>
-                  <tr><td>Precio (COP)</td><td className="required">Sí</td><td>Número en pesos (mayor a 0)</td></tr>
+                  <tr><td>Precio (COP)</td><td className="required">Sí</td><td>Número en pesos, por ejemplo 15000 o 15.000 (mayor a 0)</td></tr>
                   <tr><td>Imagen URL</td><td>No</td><td>Dirección web de la foto</td></tr>
                   <tr><td>Disponible</td><td>No</td><td>Sí / No (vacío = Sí)</td></tr>
                 </tbody>
               </table>
-              <p className="muted">Formatos aceptados: .xls, .xlsx, .csv, .txt. Si un producto ya existe por nombre, se actualiza. Las categorías se crean automáticamente.</p>
+              <p className="muted">Formatos aceptados: .xls, .xlsx, .csv, .txt. En CSV puedes separar las columnas con coma o punto y coma. Si un producto ya existe por nombre, se actualiza. Las categorías se crean automáticamente.</p>
               <a className="import-guide-link" href="/docs/guia-menu.html" target="_blank" rel="noopener">Ver guía completa en PDF</a>
             </div>
 
