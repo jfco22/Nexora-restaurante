@@ -1,3 +1,4 @@
+.page-heading-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .import-actions-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .import-actions-row .outline-button { flex: 1; min-width: 160px; }
 .import-guide-link { display: inline-block; margin-top: 10px; color: #c75236; font-size: .8rem; font-weight: 600; text-decoration: underline; }

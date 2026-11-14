@@ -22,6 +22,7 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
+  Upload,
   Utensils,
   Users,
   WalletCards,
@@ -37,6 +38,7 @@ import { KitchenBoard } from '@/components/cocina/KitchenBoard';
 import '@/components/carta/menu-availability.css';
 import { InventoryView } from '@/components/inventory/InventoryView';
 import { InventoryImportDialog } from '@/components/inventory/InventoryImportDialog';
+import { MenuImportExportDialog } from '@/components/inventory/MenuImportExportDialog';
 import { fetchOpenCashShift, formatOpenedAt, type CashShiftSummary } from '@/lib/cashShift';
 import { MANAGING_ROLES, roleLabels } from '@/lib/staffRoles';
 import { TeamView } from '@/components/equipo/TeamView';
@@ -87,6 +89,7 @@ function App() {
   const [cashPanelOpen, setCashPanelOpen] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [menuImportOpen, setMenuImportOpen] = useState(false);
 
   useEffect(() => {
     const loadSession = async (): Promise<void> => {
@@ -273,10 +276,11 @@ function App() {
         {view === 'cocina' && <KitchenBoard />}
         {view === 'inventario' && <InventoryView onImport={() => setImportOpen(true)} />}
         {importOpen && <InventoryImportDialog onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); setView('inventario'); }} />}
+        {menuImportOpen && profile && MANAGING_ROLES.includes(profile.role) && <MenuImportExportDialog onClose={() => setMenuImportOpen(false)} onImported={() => void loadCatalog()} />}
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}
         {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} />}
         {dataError && <div className="data-notice" role="alert">{dataError}</div>}
-        {view === 'carta' && <MenuOrders products={products} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={orderMessage} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={() => void submitOrder(cart)} />}
+        {view === 'carta' && <MenuOrders products={products} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={orderMessage} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={() => void submitOrder(cart)} onImportMenu={profile && MANAGING_ROLES.includes(profile.role) ? () => setMenuImportOpen(true) : undefined} />}
       </main>
     </div>
   );
@@ -323,10 +327,10 @@ function QuickCard({ icon, label, value, action, onClick }: { icon: React.ReactN
   return <article className="quick-card"><div className="quick-card-top"><span>{icon}</span><ShoppingBag size={15} /></div><p>{label}</p><strong>{value}</strong><button className="text-button" type="button" onClick={onClick}>{action} <ArrowUpRight size={14} /></button></article>;
 }
 
-type MenuOrdersProps = { products: Product[]; cart: Record<string, number>; cartCount: number; cartTotal: number; category: string; filteredProducts: Product[]; orderMessage: string | null; onCategoryChange: (category: string) => void; onSearchChange: (value: string) => void; onUpdateCart: (productId: string, change: number) => void; onSubmitOrder: () => void };
+type MenuOrdersProps = { products: Product[]; cart: Record<string, number>; cartCount: number; cartTotal: number; category: string; filteredProducts: Product[]; orderMessage: string | null; onCategoryChange: (category: string) => void; onSearchChange: (value: string) => void; onUpdateCart: (productId: string, change: number) => void; onSubmitOrder: () => void; onImportMenu?: () => void };
 
-function MenuOrders({ products, cart, cartCount, cartTotal, category, filteredProducts, orderMessage, onCategoryChange, onSearchChange, onUpdateCart, onSubmitOrder }: MenuOrdersProps) {
-  return <div className="page-wrap"><div className="page-heading"><div><p className="eyebrow">Catálogo · Operación</p><h1>Carta y pedidos</h1><p className="muted">Elige productos visualmente y arma una nueva cuenta.</p></div><div className="order-summary"><ShoppingBag size={18} /><strong>{cartCount}</strong><span>{formatCurrency(cartTotal)}</span></div></div><div className="menu-toolbar"><div className="category-tabs">{['Todos', 'Favoritos', 'Entradas', 'Para compartir'].map((item: string) => <button key={item} className={category === item ? 'selected' : ''} onClick={() => onCategoryChange(item)} type="button">{item}</button>)}</div><label className="search-field"><Search size={16} /><input aria-label="Buscar en la carta" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSearchChange(event.target.value)} placeholder="Buscar producto" /></label></div><div className="menu-layout"><section className="product-grid">{filteredProducts.map((product: Product) => <ProductCard key={product.id} product={product} quantity={cart[product.id] ?? 0} onUpdate={onUpdateCart} />)}</section><aside className="order-card"><div className="order-card-heading"><div><p className="eyebrow">Nueva cuenta</p><h2>Pedido actual</h2></div><button className="icon-button" type="button" aria-label="Cerrar pedido"><X size={17} /></button></div>{cartCount === 0 ? <div className="empty-order"><ShoppingBag size={28} /><strong>Tu pedido está vacío</strong><span>Agrega productos de la carta para comenzar.</span></div> : <><div className="order-lines">{Object.entries(cart).map(([productId, quantity]: [string, number]) => { const product = products.find((item: Product) => item.id === productId); if (!product) return null; return <div className="order-line" key={product.id}><div><strong>{product.name}</strong><span>{formatCurrency(product.price)} c/u</span></div><div className="quantity-control"><button onClick={() => onUpdateCart(product.id, -1)} type="button"><Minus size={13} /></button><b>{quantity}</b><button onClick={() => onUpdateCart(product.id, 1)} type="button"><Plus size={13} /></button></div></div>; })}</div><div className="order-total"><span>Total</span><strong>{formatCurrency(cartTotal)}</strong></div><button className="primary-button full-width" onClick={() => void onSubmitOrder()} type="button">Continuar pedido <ArrowUpRight size={16} /></button>{orderMessage && <p className="order-message" role="status">{orderMessage}</p>}</>}</aside></div></div>;
+function MenuOrders({ products, cart, cartCount, cartTotal, category, filteredProducts, orderMessage, onCategoryChange, onSearchChange, onUpdateCart, onSubmitOrder, onImportMenu }: MenuOrdersProps) {
+  return <div className="page-wrap"><div className="page-heading"><div><p className="eyebrow">Catálogo · Operación</p><h1>Carta y pedidos</h1><p className="muted">Elige productos visualmente y arma una nueva cuenta.</p></div><div className="page-heading-actions">{onImportMenu && <button className="outline-button" type="button" onClick={onImportMenu}><Upload size={16} /> Importar o gestionar menú</button>}<div className="order-summary"><ShoppingBag size={18} /><strong>{cartCount}</strong><span>{formatCurrency(cartTotal)}</span></div></div></div><div className="menu-toolbar"><div className="category-tabs">{['Todos', 'Favoritos', 'Entradas', 'Para compartir'].map((item: string) => <button key={item} className={category === item ? 'selected' : ''} onClick={() => onCategoryChange(item)} type="button">{item}</button>)}</div><label className="search-field"><Search size={16} /><input aria-label="Buscar en la carta" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSearchChange(event.target.value)} placeholder="Buscar producto" /></label></div><div className="menu-layout"><section className="product-grid">{filteredProducts.map((product: Product) => <ProductCard key={product.id} product={product} quantity={cart[product.id] ?? 0} onUpdate={onUpdateCart} />)}</section><aside className="order-card"><div className="order-card-heading"><div><p className="eyebrow">Nueva cuenta</p><h2>Pedido actual</h2></div><button className="icon-button" type="button" aria-label="Cerrar pedido"><X size={17} /></button></div>{cartCount === 0 ? <div className="empty-order"><ShoppingBag size={28} /><strong>Tu pedido está vacío</strong><span>Agrega productos de la carta para comenzar.</span></div> : <><div className="order-lines">{Object.entries(cart).map(([productId, quantity]: [string, number]) => { const product = products.find((item: Product) => item.id === productId); if (!product) return null; return <div className="order-line" key={product.id}><div><strong>{product.name}</strong><span>{formatCurrency(product.price)} c/u</span></div><div className="quantity-control"><button onClick={() => onUpdateCart(product.id, -1)} type="button"><Minus size={13} /></button><b>{quantity}</b><button onClick={() => onUpdateCart(product.id, 1)} type="button"><Plus size={13} /></button></div></div>; })}</div><div className="order-total"><span>Total</span><strong>{formatCurrency(cartTotal)}</strong></div><button className="primary-button full-width" onClick={() => void onSubmitOrder()} type="button">Continuar pedido <ArrowUpRight size={16} /></button>{orderMessage && <p className="order-message" role="status">{orderMessage}</p>}</>}</aside></div></div>;
 }
 
 function ProductCard({ product, quantity, onUpdate }: { product: Product; quantity: number; onUpdate: (productId: string, change: number) => void }) {

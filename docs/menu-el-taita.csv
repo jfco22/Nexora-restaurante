@@ -1,0 +1,51 @@
+﻿Categoría;Nombre;Descripción;Precio (COP);Imagen URL;Disponible
+Hamburguesas;Hamburguesa Doña Carmen;Carne de cerdo, queso doble crema, tomate, lechuga, pan artesanal;15000;;Sí
+Hamburguesas;Hamburguesa Gallina mellicera;Carne de pollo + doble queso + tomate + lechuga + pan artesanal;14000;;Sí
+Hamburguesas;Hamburguesa La Jornalera;Carne de res + doble queso + tomate + lechuga + pan artesanal;13000;;Sí
+Perros calientes;Perro Caliente Normal;Salchicha, papas fosforito, salsas de la casa, pan artesanal;11000;;Sí
+Perros calientes;Perro con una carne;Servido con opción de carne o guiso;13000;;Sí
+Perros calientes;Perro Champiñones + Pollo;Pollo desmechado con champiñones en salsa de la casa;14000;;Sí
+Perros calientes;Perro con dos carnes;Combinación de dos carnes a elección;15000;;Sí
+Perros calientes;Perro con Res Mechada;Carne de res desmechada especial;13000;;Sí
+Sándwiches;Sándwich de Res Mechada;Carne de res desmechada, queso doble crema, tomate, lechuga;13000;;Sí
+Sándwiches;Sándwich de Chorizo con hogao;Chorizo con hogao, queso doble crema, tomate, lechuga;12000;;Sí
+Sándwiches;Sándwich de Pollo con Champiñones;Pollo con champiñones en salsa de la casa, queso, vegetales;14000;;Sí
+Sándwiches;Sándwich Vegano;Lechuga, tomate, pepinillo, champiñón, pan artesanal;15000;;Sí
+Onces y entradas;Birriamen 140 gr;Ramen con carne de res mechada, birria, queso doble crema, tostadas y pico de gallo;10000;;Sí
+Onces y entradas;Birriamen 240 gr;Ramen con carne de res mechada, birria, queso doble crema, tostadas y pico de gallo;14000;;Sí
+Onces y entradas;Croquetas de pollo;Croquetas de pollo doradas y crocantes;3600;;Sí
+Onces y entradas;Empanada de carne;Rellena de carne molida con verduras;3800;;Sí
+Onces y entradas;Empanada de pollo;Rellena de pollo desmechado;4000;;Sí
+Onces y entradas;Empanada Ranchera;Rellena de salchicha ranchera y queso;4200;;Sí
+Onces y entradas;Empanada hawaiana;Rellena de jamón, piña y queso;4500;;Sí
+Onces y entradas;Mini Hamburguesa de res;Carne de res, queso y pan artesanal;3800;;Sí
+Bebidas;Agua Cristal 250 ml;Agua embotellada;2000;;Sí
+Bebidas;Agua Sin Gas / Con Gas;Agua embotellada 600ml / Pool;3000;;Sí
+Bebidas;Coca Cola 250 ml;Gaseosa personal;3000;;Sí
+Bebidas;Coca Cola 400 ml / Zero 400 ml;Gaseosa personal PET;4000;;Sí
+Bebidas;Postobón / Colombiana / Manzana 400 ml;Gaseosa personal PET;4000;;Sí
+Bebidas;Hit Surti 200 ml;Jugo en caja;2000;;Sí
+Bebidas;Limonada hierbabuena 10 Oz;Jugo natural;3000;;Sí
+Bebidas;Limonada hierbabuena 16 Oz;Jugo natural;6000;;Sí
+Bebidas;Limonada cerezada 10 Oz;Jugo natural;4000;;Sí
+Bebidas;Limonada cerezada 16 Oz;Jugo natural;6000;;Sí
+Bebidas;Limonada de mango 10 Oz;Jugo natural;5000;;Sí
+Bebidas;Limonada de mango 16 Oz;Jugo natural;8000;;Sí
+Bebidas;Limonada de coco 10 Oz;Jugo natural;5000;;Sí
+Bebidas;Limonada de coco 16 Oz;Jugo natural;8000;;Sí
+Bebidas;Limonada con panela 10 Oz;Jugo natural;3000;;Sí
+Bebidas;Limonada con panela 16 Oz;Jugo natural;6000;;Sí
+Bebidas;Tomate de árbol 10 Oz;Jugo natural;3000;;Sí
+Bebidas;Tomate de árbol 16 Oz;Jugo natural;6000;;Sí
+Bebidas;Jugo Maracumango 10 Oz;Jugo natural;4000;;Sí
+Bebidas;Jugo Maracumango 16 Oz;Jugo natural;8000;;Sí
+Bebidas;Jugo de temporada 10 Oz;Jugo natural;5000;;Sí
+Bebidas;Jugo de temporada 16 Oz;Jugo natural;9000;;Sí
+Bebidas calientes;Café cerrero;Café sin adicionales;3000;;Sí
+Bebidas calientes;Café el Taita;Café, panela, clavos y canela;4000;;Sí
+Bebidas calientes;Aromática;Aromáticas;3000;;Sí
+Licores;Cerveza Coronita;;4000;;Sí
+Licores;Cerveza Corona Extra / Lata 310ml;;5000;;Sí
+Licores;Cerveza Heineken 310 ml;;5000;;Sí
+Licores;Cerveza Club Trigo;;4000;;Sí
+Licores;Cerveza 3 Cordilleras Mestiz / Rosa 300ml;;10000;;Sí
