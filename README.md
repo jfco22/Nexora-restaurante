@@ -61,3 +61,7 @@ Después de publicar, en Supabase → *Authentication → URL Configuration*, po
 ## Menú de El Taita
 
 `docs/menu-el-taita.csv` y `docs/menu-el-taita.xlsx` traen la carta completa (50 productos). Para cargarla: entrar como propietario o gerente, abrir **Carta → Importar o gestionar menú** y subir el archivo. El importador actualiza por nombre, así que repetir la importación no duplica productos.
+
+## Fotos del menú
+
+Las fotos están en `public/menu` y se llaman igual que el producto (`Hamburguesa La Jornalera.jpg`; si el nombre trae `/`, se escribe `-`). Al importar el menú, si la columna **Imagen URL** está vacía, se usa la foto con el nombre del producto. Más detalles en `public/menu/LEEME.txt`. Para agregar una foto: copiarla a esa carpeta, subir el cambio y volver a importar el menú (el importador actualiza por nombre).

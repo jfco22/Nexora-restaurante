@@ -3,6 +3,7 @@ import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertTriangle, X, Tras
 import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabase';
 import { userFacingError } from '@/lib/tableAccount';
+import { loadMenuImageList, resolveMenuImage } from '@/lib/menuImages';
 import { csvToObjects, decodeCsvBytes, downloadCsv, parsePriceCop, toCsv } from '@/lib/importParsing';
 import '@/components/inventory/menu-import.css';
 
@@ -206,6 +207,12 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
           return;
         }
         setRows(parsed.rows);
+        // Busca la foto de cada producto en public/menu (mismo nombre del producto) y la completa si la celda está vacía.
+        void loadMenuImageList().then((available: Set<string>) => {
+          setRows((current: MenuRow[]) => current === parsed.rows
+            ? current.map((row: MenuRow): MenuRow => ({ ...row, image_url: resolveMenuImage(row.image_url, row.name, available) }))
+            : current);
+        });
       } catch {
         setParseError('No pudimos leer el archivo. Asegúrate de que sea un archivo válido (.xls, .xlsx, .csv o .txt).');
         setRows([]);
@@ -456,7 +463,7 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
                   <tr><td>Nombre</td><td className="required">Sí</td><td>Texto del producto</td></tr>
                   <tr><td>Descripción</td><td>No</td><td>Texto breve del plato</td></tr>
                   <tr><td>Precio (COP)</td><td className="required">Sí</td><td>Número en pesos, por ejemplo 15000 o 15.000 (mayor a 0)</td></tr>
-                  <tr><td>Imagen URL</td><td>No</td><td>Dirección web de la foto</td></tr>
+                  <tr><td>Imagen URL</td><td>No</td><td>Dirección web de la foto o nombre del archivo de la carpeta de fotos. Vacío = se busca la foto que se llama igual que el producto</td></tr>
                   <tr><td>Disponible</td><td>No</td><td>Sí / No (vacío = Sí)</td></tr>
                 </tbody>
               </table>
@@ -498,6 +505,7 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
                   <div>
                     <h3>Vista previa ({rows.length} filas)</h3>
                     <p className="muted">{validRows.length} listas para importar{errorRows.length > 0 ? `, ${errorRows.length} con errores` : ''}.</p>
+                    <p className="muted">{validRows.filter((row: MenuRow) => row.image_url !== '').length} de {validRows.length} con foto{validRows.some((row: MenuRow) => row.image_url === '') ? `. Sin foto: ${validRows.filter((row: MenuRow) => row.image_url === '').map((row: MenuRow) => row.name).slice(0, 6).join(', ')}${validRows.filter((row: MenuRow) => row.image_url === '').length > 6 ? '…' : ''}` : ''}.</p>
                   </div>
                   <button className="outline-button" type="button" onClick={addRow} disabled={busy}><Plus size={15} /> Agregar fila</button>
                 </div>

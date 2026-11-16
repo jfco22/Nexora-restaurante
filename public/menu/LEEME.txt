@@ -1,0 +1,15 @@
+FOTOS DEL MENU
+==============
+Cada foto se llama igual que el producto en el archivo del menu (columna Nombre), con extension .jpg
+Ejemplo: el producto "Hamburguesa La Jornalera" usa  Hamburguesa La Jornalera.jpg
+
+Unica diferencia: si el nombre trae "/" se escribe "-" (los archivos no pueden llevar "/").
+Ejemplo: "Postobon / Colombiana / Manzana 400 ml"  ->  Postobon - Colombiana - Manzana 400 ml.jpg
+
+Al importar el CSV o el Excel, la columna "Imagen URL" puede ir:
+  - vacia: se usa la foto que se llama igual que el producto (si existe en esta carpeta);
+  - con un nombre de archivo de esta carpeta, por ejemplo  Birriamen 140 gr.jpg ;
+  - con una direccion completa  https://...
+
+Para agregar o cambiar una foto: copiarla aqui con el nombre del producto, subir el cambio a GitHub y volver a importar el menu.
+manifest.json lo genera solo el proceso de compilacion; no hay que tocarlo.
