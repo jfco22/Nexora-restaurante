@@ -189,7 +189,7 @@ function App() {
     const matchesCategory = category === 'Todos' || product.category === category;
     const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
-  }), [category, search]);
+  }), [category, products, search]);
 
   const updateCart = (productId: string, change: number): void => {
     setCart((current: Record<string, number>) => {
