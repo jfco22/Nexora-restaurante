@@ -132,7 +132,7 @@ function App() {
       description: product.description,
       price: product.price_cop,
       category: categoryNames.get(product.category_id) ?? 'Carta',
-      image: product.image_url ?? FALLBACK_PRODUCT_IMAGE,
+      image: product.image_url?.trim() || FALLBACK_PRODUCT_IMAGE,
       servings: servingsByProduct.get(product.id) ?? null,
     }));
     setDataError(null);
