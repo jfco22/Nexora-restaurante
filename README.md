@@ -65,3 +65,8 @@ Después de publicar, en Supabase → *Authentication → URL Configuration*, po
 ## Fotos del menú
 
 Las fotos están en `public/menu` y se llaman igual que el producto (`Hamburguesa La Jornalera.jpg`; si el nombre trae `/`, se escribe `-`). Al importar el menú, si la columna **Imagen URL** está vacía, se usa la foto con el nombre del producto. Más detalles en `public/menu/LEEME.txt`. Para agregar una foto: copiarla a esa carpeta, subir el cambio y volver a importar el menú (el importador actualiza por nombre).
+
+## Recetas por CSV
+
+En **Inventario → Importar recetas** se sube un CSV o Excel con las columnas `Producto; Insumo; Cantidad; Unidad` (una fila por insumo de cada plato). Los productos se buscan por nombre y los insumos también; si el insumo no existe y la fila trae `Unidad`, se crea en la bodega con stock 0. `docs/recetas-el-taita-borrador.csv` trae los insumos de cada plato según la carta, con las cantidades por completar.
+
