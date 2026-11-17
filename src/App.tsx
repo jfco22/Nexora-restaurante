@@ -72,9 +72,13 @@ const greetingForHour = (): string => {
 
 const FALLBACK_PRODUCT_IMAGE = 'https://images.pexels.com/photos/23086/food-restaurant-kitchen-meat-23086.jpg?auto=compress&cs=tinysrgb&h=650&w=940';
 
+/** Enlace para el código QR: https://tu-direccion/menu (también funciona ?menu). Abre la carta para clientes sin pedir ingreso. */
+const IS_MENU_LINK = typeof window !== 'undefined'
+  && (window.location.pathname.replace(/\/+$/, '') === '/menu' || new URLSearchParams(window.location.search).has('menu'));
+
 function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [guestMode, setGuestMode] = useState(false);
+  const [guestMode, setGuestMode] = useState(IS_MENU_LINK);
   const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState<View>('inicio');
   const [products, setProducts] = useState<Product[]>([]);
@@ -221,6 +225,7 @@ function App() {
     return { ok: true, orderNumber: data[0].order_number };
   };
 
+  if (IS_MENU_LINK) return <GuestExperience products={products} onSubmitOrder={submitOrder} />;
   if (authLoading) return <div className="auth-loading">Cargando Nexora...</div>;
   if (!session && !guestMode && !forgotPassword) return <AuthScreen onGuestAccess={() => setGuestMode(true)} onForgotPassword={() => setForgotPassword(true)} />;
   if (!session && forgotPassword) return <ForgotPasswordScreen onBack={() => setForgotPassword(false)} />;
@@ -364,7 +369,7 @@ function GuestExperience({ products, onSubmitOrder }: { products: Product[]; onS
     }
     setMessage({ tone: 'error', text: result.message });
   };
-  return <main className="guest-shell"><header className="guest-header"><div className="brand-lockup"><span className="brand-mark">N</span><span>Nexora</span></div><span>Menú del restaurante</span></header><div className="guest-content"><div className="guest-intro"><p className="eyebrow">Cliente invitado</p><h1>Elige lo que quieres disfrutar</h1><p className="muted">No necesitas crear una cuenta. Solo te pediremos unos datos al confirmar.</p></div><MenuOrders products={products} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={null} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={placeGuestOrder} /></div><div className="guest-checkout"><label>Nombre<input value={guestName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestName(event.target.value)} placeholder="Tu nombre" /></label><label>Teléfono <span>(opcional)</span><input value={guestPhone} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestPhone(event.target.value)} placeholder="300 000 0000" /></label><p className="guest-payment-note">Confirmas tu pedido y pagas en caja con efectivo, tarjeta o Bre-B. La cocina lo prepara cuando el pago queda aprobado.</p>{message && <p className={`guest-message ${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.text}</p>}</div></main>;
+  return <main className="guest-shell"><header className="guest-header"><div className="brand-lockup"><span className="brand-mark">T</span><span>El Taita</span></div><span>Menú del restaurante</span></header><div className="guest-content"><div className="guest-intro"><p className="eyebrow">Cliente invitado</p><h1>Elige lo que quieres disfrutar</h1><p className="muted">No necesitas crear una cuenta. Solo te pediremos unos datos al confirmar.</p></div><MenuOrders products={products} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={null} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={placeGuestOrder} /></div><div className="guest-checkout"><label>Nombre<input value={guestName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestName(event.target.value)} placeholder="Tu nombre" /></label><label>Teléfono <span>(opcional)</span><input value={guestPhone} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestPhone(event.target.value)} placeholder="300 000 0000" /></label><p className="guest-payment-note">Confirmas tu pedido y pagas en caja con efectivo, tarjeta o Bre-B. La cocina lo prepara cuando el pago queda aprobado.</p>{message && <p className={`guest-message ${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.text}</p>}</div></main>;
 }
 
 function AuthScreen({ onGuestAccess, onForgotPassword }: { onGuestAccess: () => void; onForgotPassword: () => void }) {
