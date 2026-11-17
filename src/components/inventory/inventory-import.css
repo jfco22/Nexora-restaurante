@@ -78,3 +78,7 @@
   .import-guide-table { font-size: .78rem; }
   .import-preview-table { font-size: .75rem; }
 }
+
+.import-check { display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 12px; font-size: .85rem; color: #27312d; cursor: pointer; }
+
+.import-check input { margin-top: 3px; }

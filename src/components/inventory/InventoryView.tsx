@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ShoppingBasket, Boxes, Soup, Upload } from 'lucide-react';
+import { RecipeImportDialog } from '@/components/inventory/RecipeImportDialog';
 import { fetchInventory, type InventoryItem } from '@/lib/inventory';
 import { InventoryStockTab } from '@/components/inventory/InventoryStockTab';
 import { RecipesTab } from '@/components/inventory/RecipesTab';
@@ -22,6 +23,8 @@ export function InventoryView({ onImport }: { onImport: () => void }) {
   const [usedToday, setUsedToday] = useState<Map<string, number>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [recipeImportOpen, setRecipeImportOpen] = useState(false);
+  const [recipesVersion, setRecipesVersion] = useState(0);
 
   const loadInventory = useCallback(async (): Promise<void> => {
     const result = await fetchInventory();
@@ -48,7 +51,10 @@ export function InventoryView({ onImport }: { onImport: () => void }) {
             {lowCount > 0 ? `${lowCount} insumos están en o bajo el mínimo.` : 'Todo el inventario está sobre el mínimo.'}
           </p>
         </div>
-        <button className="primary-button" type="button" onClick={onImport}><Upload size={16} /> Importar Excel</button>
+        <div className="page-heading-actions">
+          <button className="outline-button" type="button" onClick={() => setRecipeImportOpen(true)}><Soup size={16} /> Importar recetas</button>
+          <button className="primary-button" type="button" onClick={onImport}><Upload size={16} /> Importar Excel</button>
+        </div>
       </div>
 
       <div className="inventory-tabs" role="tablist" aria-label="Secciones de inventario">
@@ -72,8 +78,14 @@ export function InventoryView({ onImport }: { onImport: () => void }) {
       {loaded && tab === 'stock' && (
         <InventoryStockTab items={items} archivedItems={archivedItems} usedToday={usedToday} onChanged={loadInventory} />
       )}
-      {loaded && tab === 'recipes' && <RecipesTab items={items} />}
+      {loaded && tab === 'recipes' && <RecipesTab key={recipesVersion} items={items} />}
       {loaded && tab === 'shopping' && <ShoppingTab items={items} />}
+      {recipeImportOpen && (
+        <RecipeImportDialog
+          onClose={() => setRecipeImportOpen(false)}
+          onImported={() => { setRecipesVersion((version: number) => version + 1); void loadInventory(); }}
+        />
+      )}
     </div>
   );
 }
