@@ -2,17 +2,17 @@
 Hamburguesa Doña Carmen;Pan artesanal hamburguesa;1;unidad
 Hamburguesa Doña Carmen;Carne de cerdo molida;;g
 Hamburguesa Doña Carmen;Queso doble crema;;g
-Hamburguesa Doña Carmen;Tomate;;g
+Hamburguesa Doña Carmen;Tomate;;unidad
 Hamburguesa Doña Carmen;Lechuga;;g
 Hamburguesa Gallina mellicera;Pan artesanal hamburguesa;1;unidad
 Hamburguesa Gallina mellicera;Carne de pollo molida;;g
 Hamburguesa Gallina mellicera;Queso doble crema;;g
-Hamburguesa Gallina mellicera;Tomate;;g
+Hamburguesa Gallina mellicera;Tomate;;unidad
 Hamburguesa Gallina mellicera;Lechuga;;g
 Hamburguesa La Jornalera;Pan artesanal hamburguesa;1;unidad
 Hamburguesa La Jornalera;Carne de res molida;;g
 Hamburguesa La Jornalera;Queso doble crema;;g
-Hamburguesa La Jornalera;Tomate;;g
+Hamburguesa La Jornalera;Tomate;;unidad
 Hamburguesa La Jornalera;Lechuga;;g
 Perro Caliente Normal;Pan artesanal perro;1;unidad
 Perro Caliente Normal;Salchicha;1;unidad
@@ -27,23 +27,23 @@ Perro con Res Mechada;Res mechada;;g
 Sándwich de Res Mechada;Pan artesanal sándwich;1;unidad
 Sándwich de Res Mechada;Res mechada;;g
 Sándwich de Res Mechada;Queso doble crema;;g
-Sándwich de Res Mechada;Tomate;;g
+Sándwich de Res Mechada;Tomate;;unidad
 Sándwich de Res Mechada;Lechuga;;g
 Sándwich de Chorizo con hogao;Pan artesanal sándwich;1;unidad
 Sándwich de Chorizo con hogao;Chorizo;;g
 Sándwich de Chorizo con hogao;Hogao;;g
 Sándwich de Chorizo con hogao;Queso doble crema;;g
-Sándwich de Chorizo con hogao;Tomate;;g
+Sándwich de Chorizo con hogao;Tomate;;unidad
 Sándwich de Chorizo con hogao;Lechuga;;g
 Sándwich de Pollo con Champiñones;Pan artesanal sándwich;1;unidad
 Sándwich de Pollo con Champiñones;Pollo desmechado;;g
 Sándwich de Pollo con Champiñones;Champiñones;;g
 Sándwich de Pollo con Champiñones;Queso doble crema;;g
 Sándwich de Pollo con Champiñones;Lechuga;;g
-Sándwich de Pollo con Champiñones;Tomate;;g
+Sándwich de Pollo con Champiñones;Tomate;;unidad
 Sándwich Vegano;Pan artesanal sándwich;1;unidad
 Sándwich Vegano;Lechuga;;g
-Sándwich Vegano;Tomate;;g
+Sándwich Vegano;Tomate;;unidad
 Sándwich Vegano;Pepinillo;;g
 Sándwich Vegano;Champiñones;;g
 Birriamen 140 gr;Fideos ramen;;g
