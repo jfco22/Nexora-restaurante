@@ -13,7 +13,7 @@ export type RecipeImportOutcome = {
 };
 
 /**
- * Guarda las filas válidas del plan: crea los insumos nuevos (stock 0, en bodega), guarda las líneas de receta
+ * Guarda las filas válidas del plan: crea los insumos nuevos (stock 0, en la ubicación indicada o en bodega), guarda las líneas de receta
  * y, si `replace` está activo, quita de cada producto los insumos que no vienen en el archivo.
  * Solo se reemplaza una receta cuando todas las filas de ese producto en el archivo son válidas.
  */
@@ -28,7 +28,7 @@ export async function applyRecipePlan(plan: RecipePlan, existingLines: RecipeLin
   if (plan.newItems.length > 0) {
     const { data, error } = await supabase
       .from('nexora_inventory_items')
-      .insert(plan.newItems.map((item) => ({ name: item.name.trim(), unit: item.unit, storage_location: 'bodega', min_stock: 0 })))
+      .insert(plan.newItems.map((item) => ({ name: item.name.trim(), unit: item.unit, storage_location: item.location, min_stock: 0 })))
       .select('id, name');
     if (error) {
       return failed(error.code === '23505'

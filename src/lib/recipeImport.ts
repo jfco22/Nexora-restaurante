@@ -2,6 +2,7 @@
 // Sin React ni Supabase, para poder probarlo solo.
 
 export type RecipeUnit = 'g' | 'kg' | 'ml' | 'l' | 'unidad';
+export type RecipeLocation = 'nevera' | 'estanteria' | 'bodega';
 
 export type RecipeRow = {
   rowNumber: number;
@@ -10,6 +11,8 @@ export type RecipeRow = {
   quantity: number | null;
   unit: RecipeUnit | null;
   unitText: string;
+  /** Dónde se guarda el insumo; solo se usa si hay que crearlo. */
+  location: RecipeLocation | null;
   errors: string[];
 };
 
@@ -31,16 +34,17 @@ export type PlanLine = {
 
 export type RecipePlan = {
   lines: PlanLine[];
-  newItems: { name: string; unit: RecipeUnit }[];
+  newItems: { name: string; unit: RecipeUnit; location: RecipeLocation }[];
 };
 
-export const RECIPE_HEADERS = ['Producto', 'Insumo', 'Cantidad', 'Unidad'];
+export const RECIPE_HEADERS = ['Producto', 'Insumo', 'Cantidad', 'Unidad', 'Ubicación'];
 
-const FIELD_BY_HEADER: Record<string, 'product' | 'item' | 'quantity' | 'unit'> = {
+const FIELD_BY_HEADER: Record<string, 'product' | 'item' | 'quantity' | 'unit' | 'location'> = {
   producto: 'product', plato: 'product', nombre: 'product', 'nombre del producto': 'product',
   insumo: 'item', ingrediente: 'item', 'nombre del insumo': 'item',
   cantidad: 'quantity', 'cantidad por plato': 'quantity', 'cantidad por porcion': 'quantity',
   unidad: 'unit', 'unidad de medida': 'unit',
+  ubicacion: 'location', almacenamiento: 'location', 'ubicacion del insumo': 'location',
 };
 
 /** Compara nombres sin importar mayúsculas, tildes ni espacios de más. */
@@ -55,6 +59,14 @@ export function parseUnit(value: string): RecipeUnit | null {
   if (['ml', 'mililitro', 'mililitros', 'cc'].includes(key)) return 'ml';
   if (['l', 'lt', 'lts', 'litro', 'litros'].includes(key)) return 'l';
   if (['unidad', 'unidades', 'und', 'unid', 'u', 'un'].includes(key)) return 'unidad';
+  return null;
+}
+
+export function parseLocation(value: string): RecipeLocation | null {
+  const key = normalizeName(value);
+  if (['nevera', 'refrigerador', 'refrigeracion', 'frio', 'congelador'].includes(key)) return 'nevera';
+  if (['estanteria', 'estante', 'estanterias', 'despensa', 'seco'].includes(key)) return 'estanteria';
+  if (['bodega', 'almacen'].includes(key)) return 'bodega';
   return null;
 }
 
@@ -89,7 +101,7 @@ export function convertQuantity(quantity: number, from: RecipeUnit, to: RecipeUn
 
 export function parseRecipeRecords(records: Record<string, unknown>[]): ParsedRecipes {
   if (records.length === 0) return { rows: [], missingColumns: [] };
-  const fieldByColumn = new Map<string, 'product' | 'item' | 'quantity' | 'unit'>();
+  const fieldByColumn = new Map<string, 'product' | 'item' | 'quantity' | 'unit' | 'location'>();
   for (const column of Object.keys(records[0] ?? {})) {
     const field = FIELD_BY_HEADER[normalizeName(column)];
     if (field) fieldByColumn.set(column, field);
@@ -116,9 +128,12 @@ export function parseRecipeRecords(records: Record<string, unknown>[]): ParsedRe
     const quantity = parseQuantity(rawQuantity);
     if (quantity === null) errors.push(String(rawQuantity ?? '').trim() === '' ? 'Falta la cantidad' : 'La cantidad no es un número');
     else if (quantity <= 0) errors.push('La cantidad debe ser mayor que cero');
+    const locationText = String(values.location ?? '').trim();
+    const location = locationText === '' ? null : parseLocation(locationText);
+    if (locationText !== '' && location === null) errors.push(`Ubicación no reconocida: "${locationText}" (usa nevera, estanteria o bodega)`);
     const unit = unitText === '' ? null : parseUnit(unitText);
     if (unitText !== '' && unit === null) errors.push(`Unidad no reconocida: "${unitText}" (usa g, kg, ml, l o unidad)`);
-    rows.push({ rowNumber: index + 2, product, item, quantity, unit, unitText, errors });
+    rows.push({ rowNumber: index + 2, product, item, quantity, unit, unitText, location, errors });
   });
   return { rows, missingColumns: [] };
 }
@@ -127,7 +142,7 @@ export function parseRecipeRecords(records: Record<string, unknown>[]): ParsedRe
 export function buildRecipePlan(rows: RecipeRow[], products: PlanProduct[], items: PlanItem[]): RecipePlan {
   const productByName = new Map(products.map((product: PlanProduct) => [normalizeName(product.name), product]));
   const itemByName = new Map(items.map((item: PlanItem) => [normalizeName(item.name), item]));
-  const newItemUnit = new Map<string, { name: string; unit: RecipeUnit }>();
+  const newItemUnit = new Map<string, { name: string; unit: RecipeUnit; location: RecipeLocation }>();
   const seen = new Set<string>();
   const lines: PlanLine[] = [];
 
@@ -149,7 +164,8 @@ export function buildRecipePlan(rows: RecipeRow[], products: PlanProduct[], item
         }
       } else if (row.unit || newItemUnit.has(itemKey)) {
         const known = newItemUnit.get(itemKey);
-        if (!known && row.unit) newItemUnit.set(itemKey, { name: row.item, unit: row.unit });
+        if (!known && row.unit) newItemUnit.set(itemKey, { name: row.item, unit: row.unit, location: row.location ?? 'bodega' });
+        else if (known && row.location && known.location === 'bodega') known.location = row.location;
         else if (known && row.unit) {
           quantity = convertQuantity(quantity, row.unit, known.unit);
           if (quantity === null) errors.push(`Este insumo nuevo aparece con unidades distintas (${known.unit} y ${row.unit})`);
