@@ -1,69 +1,69 @@
-﻿Producto;Insumo;Cantidad;Unidad
-Hamburguesa Doña Carmen;Pan artesanal hamburguesa;1;unidad
-Hamburguesa Doña Carmen;Carne de cerdo molida;;g
-Hamburguesa Doña Carmen;Queso doble crema;;g
-Hamburguesa Doña Carmen;Tomate;;unidad
-Hamburguesa Doña Carmen;Lechuga;;g
-Hamburguesa Gallina mellicera;Pan artesanal hamburguesa;1;unidad
-Hamburguesa Gallina mellicera;Carne de pollo molida;;g
-Hamburguesa Gallina mellicera;Queso doble crema;;g
-Hamburguesa Gallina mellicera;Tomate;;unidad
-Hamburguesa Gallina mellicera;Lechuga;;g
-Hamburguesa La Jornalera;Pan artesanal hamburguesa;1;unidad
-Hamburguesa La Jornalera;Carne de res molida;;g
-Hamburguesa La Jornalera;Queso doble crema;;g
-Hamburguesa La Jornalera;Tomate;;unidad
-Hamburguesa La Jornalera;Lechuga;;g
-Perro Caliente Normal;Pan artesanal perro;1;unidad
-Perro Caliente Normal;Salchicha;1;unidad
-Perro Caliente Normal;Papa fosforito;;g
-Perro con una carne;Pan artesanal perro;1;unidad
-Perro Champiñones + Pollo;Pan artesanal perro;1;unidad
-Perro Champiñones + Pollo;Pollo desmechado;;g
-Perro Champiñones + Pollo;Champiñones;;g
-Perro con dos carnes;Pan artesanal perro;1;unidad
-Perro con Res Mechada;Pan artesanal perro;1;unidad
-Perro con Res Mechada;Res mechada;;g
-Sándwich de Res Mechada;Pan artesanal sándwich;1;unidad
-Sándwich de Res Mechada;Res mechada;;g
-Sándwich de Res Mechada;Queso doble crema;;g
-Sándwich de Res Mechada;Tomate;;unidad
-Sándwich de Res Mechada;Lechuga;;g
-Sándwich de Chorizo con hogao;Pan artesanal sándwich;1;unidad
-Sándwich de Chorizo con hogao;Chorizo;;g
-Sándwich de Chorizo con hogao;Hogao;;g
-Sándwich de Chorizo con hogao;Queso doble crema;;g
-Sándwich de Chorizo con hogao;Tomate;;unidad
-Sándwich de Chorizo con hogao;Lechuga;;g
-Sándwich de Pollo con Champiñones;Pan artesanal sándwich;1;unidad
-Sándwich de Pollo con Champiñones;Pollo desmechado;;g
-Sándwich de Pollo con Champiñones;Champiñones;;g
-Sándwich de Pollo con Champiñones;Queso doble crema;;g
-Sándwich de Pollo con Champiñones;Lechuga;;g
-Sándwich de Pollo con Champiñones;Tomate;;unidad
-Sándwich Vegano;Pan artesanal sándwich;1;unidad
-Sándwich Vegano;Lechuga;;g
-Sándwich Vegano;Tomate;;unidad
-Sándwich Vegano;Pepinillo;;g
-Sándwich Vegano;Champiñones;;g
-Birriamen 140 gr;Fideos ramen;;g
-Birriamen 140 gr;Res mechada;;g
-Birriamen 140 gr;Birria;;g
-Birriamen 140 gr;Queso doble crema;;g
-Birriamen 140 gr;Tostadas;;g
-Birriamen 140 gr;Pico de gallo;;g
-Birriamen 240 gr;Fideos ramen;;g
-Birriamen 240 gr;Res mechada;;g
-Birriamen 240 gr;Birria;;g
-Birriamen 240 gr;Queso doble crema;;g
-Birriamen 240 gr;Tostadas;;g
-Birriamen 240 gr;Pico de gallo;;g
-Mini Hamburguesa de res;Pan artesanal mini hamburguesa;1;unidad
-Mini Hamburguesa de res;Carne de res molida;;g
-Mini Hamburguesa de res;Queso doble crema;;g
-Agua Cristal 250 ml;Agua Cristal 250 ml;1;unidad
-Coca Cola 250 ml;Coca Cola 250 ml;1;unidad
-Hit Surti 200 ml;Hit Surti 200 ml;1;unidad
-Cerveza Coronita;Cerveza Coronita;1;unidad
-Cerveza Heineken 310 ml;Cerveza Heineken 310 ml;1;unidad
-Cerveza Club Trigo;Cerveza Club Trigo;1;unidad
+﻿Producto;Insumo;Cantidad;Unidad;Ubicación
+Hamburguesa Doña Carmen;Pan artesanal hamburguesa;1;unidad;estanteria
+Hamburguesa Doña Carmen;Carne de cerdo molida;;g;nevera
+Hamburguesa Doña Carmen;Queso doble crema;;g;nevera
+Hamburguesa Doña Carmen;Tomate;;unidad;estanteria
+Hamburguesa Doña Carmen;Lechuga;;g;nevera
+Hamburguesa Gallina mellicera;Pan artesanal hamburguesa;1;unidad;estanteria
+Hamburguesa Gallina mellicera;Carne de pollo molida;;g;nevera
+Hamburguesa Gallina mellicera;Queso doble crema;;g;nevera
+Hamburguesa Gallina mellicera;Tomate;;unidad;estanteria
+Hamburguesa Gallina mellicera;Lechuga;;g;nevera
+Hamburguesa La Jornalera;Pan artesanal hamburguesa;1;unidad;estanteria
+Hamburguesa La Jornalera;Carne de res molida;;g;nevera
+Hamburguesa La Jornalera;Queso doble crema;;g;nevera
+Hamburguesa La Jornalera;Tomate;;unidad;estanteria
+Hamburguesa La Jornalera;Lechuga;;g;nevera
+Perro Caliente Normal;Pan artesanal perro;1;unidad;estanteria
+Perro Caliente Normal;Salchicha;1;unidad;nevera
+Perro Caliente Normal;Papa fosforito;;g;estanteria
+Perro con una carne;Pan artesanal perro;1;unidad;estanteria
+Perro Champiñones + Pollo;Pan artesanal perro;1;unidad;estanteria
+Perro Champiñones + Pollo;Pollo desmechado;;g;nevera
+Perro Champiñones + Pollo;Champiñones;;g;nevera
+Perro con dos carnes;Pan artesanal perro;1;unidad;estanteria
+Perro con Res Mechada;Pan artesanal perro;1;unidad;estanteria
+Perro con Res Mechada;Res mechada;;g;nevera
+Sándwich de Res Mechada;Pan artesanal sándwich;1;unidad;estanteria
+Sándwich de Res Mechada;Res mechada;;g;nevera
+Sándwich de Res Mechada;Queso doble crema;;g;nevera
+Sándwich de Res Mechada;Tomate;;unidad;estanteria
+Sándwich de Res Mechada;Lechuga;;g;nevera
+Sándwich de Chorizo con hogao;Pan artesanal sándwich;1;unidad;estanteria
+Sándwich de Chorizo con hogao;Chorizo;;g;nevera
+Sándwich de Chorizo con hogao;Hogao;;g;nevera
+Sándwich de Chorizo con hogao;Queso doble crema;;g;nevera
+Sándwich de Chorizo con hogao;Tomate;;unidad;estanteria
+Sándwich de Chorizo con hogao;Lechuga;;g;nevera
+Sándwich de Pollo con Champiñones;Pan artesanal sándwich;1;unidad;estanteria
+Sándwich de Pollo con Champiñones;Pollo desmechado;;g;nevera
+Sándwich de Pollo con Champiñones;Champiñones;;g;nevera
+Sándwich de Pollo con Champiñones;Queso doble crema;;g;nevera
+Sándwich de Pollo con Champiñones;Lechuga;;g;nevera
+Sándwich de Pollo con Champiñones;Tomate;;unidad;estanteria
+Sándwich Vegano;Pan artesanal sándwich;1;unidad;estanteria
+Sándwich Vegano;Lechuga;;g;nevera
+Sándwich Vegano;Tomate;;unidad;estanteria
+Sándwich Vegano;Pepinillo;;g;estanteria
+Sándwich Vegano;Champiñones;;g;nevera
+Birriamen 140 gr;Fideos ramen;;g;estanteria
+Birriamen 140 gr;Res mechada;;g;nevera
+Birriamen 140 gr;Birria;;g;nevera
+Birriamen 140 gr;Queso doble crema;;g;nevera
+Birriamen 140 gr;Tostadas;;g;estanteria
+Birriamen 140 gr;Pico de gallo;;g;nevera
+Birriamen 240 gr;Fideos ramen;;g;estanteria
+Birriamen 240 gr;Res mechada;;g;nevera
+Birriamen 240 gr;Birria;;g;nevera
+Birriamen 240 gr;Queso doble crema;;g;nevera
+Birriamen 240 gr;Tostadas;;g;estanteria
+Birriamen 240 gr;Pico de gallo;;g;nevera
+Mini Hamburguesa de res;Pan artesanal mini hamburguesa;1;unidad;estanteria
+Mini Hamburguesa de res;Carne de res molida;;g;nevera
+Mini Hamburguesa de res;Queso doble crema;;g;nevera
+Agua Cristal 250 ml;Agua Cristal 250 ml;1;unidad;bodega
+Coca Cola 250 ml;Coca Cola 250 ml;1;unidad;bodega
+Hit Surti 200 ml;Hit Surti 200 ml;1;unidad;bodega
+Cerveza Coronita;Cerveza Coronita;1;unidad;nevera
+Cerveza Heineken 310 ml;Cerveza Heineken 310 ml;1;unidad;nevera
+Cerveza Club Trigo;Cerveza Club Trigo;1;unidad;nevera

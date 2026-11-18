@@ -11,11 +11,11 @@ import '@/components/inventory/menu-import.css';
 type RecipeImportDialogProps = { onClose: () => void; onImported: () => void };
 
 const EXAMPLE_ROWS: (string | number)[][] = [
-  ['Hamburguesa Doña Carmen', 'Pan hamburguesa', 1, 'unidad'],
-  ['Hamburguesa Doña Carmen', 'Carne res molida', 150, 'g'],
-  ['Hamburguesa Doña Carmen', 'Queso mozzarella', 40, 'g'],
-  ['Perro Caliente Normal', 'Pan perro', 1, 'unidad'],
-  ['Perro Caliente Normal', 'Salchicha', 1, 'unidad'],
+  ['Hamburguesa Doña Carmen', 'Pan hamburguesa', 1, 'unidad', 'estanteria'],
+  ['Hamburguesa Doña Carmen', 'Carne res molida', 150, 'g', 'nevera'],
+  ['Hamburguesa Doña Carmen', 'Queso mozzarella', 40, 'g', 'nevera'],
+  ['Perro Caliente Normal', 'Pan perro', 1, 'unidad', 'estanteria'],
+  ['Perro Caliente Normal', 'Salchicha', 1, 'unidad', 'nevera'],
 ];
 
 export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogProps) {
@@ -141,6 +141,7 @@ export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogPr
               <tr><td>Producto</td><td className="required">Sí</td><td>El nombre del plato, igual que en la carta</td></tr>
               <tr><td>Insumo</td><td className="required">Sí</td><td>El nombre del insumo en Inventario</td></tr>
               <tr><td>Cantidad</td><td className="required">Sí</td><td>Cuánto lleva un plato (número; decimales con coma o punto)</td></tr>
+              <tr><td>Ubicación</td><td>No</td><td>nevera, estanteria o bodega. Solo se usa al crear un insumo nuevo; si no la pones, queda en bodega</td></tr>
               <tr><td>Unidad</td><td>No</td><td>g, kg, ml, l o unidad. Si el insumo está en otra unidad compatible, se convierte (150 g = 0,15 kg). Si el insumo no existe, con la unidad se crea en la bodega con stock 0</td></tr>
             </tbody>
           </table>
