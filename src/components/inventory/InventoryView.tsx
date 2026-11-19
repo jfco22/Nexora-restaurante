@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ShoppingBasket, Boxes, Soup, Upload } from 'lucide-react';
+import { ChefHat, ShoppingBasket, Boxes, Soup, Upload } from 'lucide-react';
 import { RecipeImportDialog } from '@/components/inventory/RecipeImportDialog';
 import { fetchInventory, type InventoryItem } from '@/lib/inventory';
 import { InventoryStockTab } from '@/components/inventory/InventoryStockTab';
+import { PreparationsTab } from '@/components/inventory/PreparationsTab';
 import { RecipesTab } from '@/components/inventory/RecipesTab';
 import { ShoppingTab } from '@/components/inventory/ShoppingTab';
 import '@/components/inventory/inventory.css';
 import '@/components/inventory/inventory-import.css';
 
-type InventoryTab = 'stock' | 'recipes' | 'shopping';
+type InventoryTab = 'stock' | 'recipes' | 'cook' | 'shopping';
 
 const tabs: { value: InventoryTab; label: string; icon: React.ReactNode }[] = [
   { value: 'stock', label: 'Insumos', icon: <Boxes size={16} /> },
   { value: 'recipes', label: 'Recetas', icon: <Soup size={16} /> },
+  { value: 'cook', label: 'Cocinar', icon: <ChefHat size={16} /> },
   { value: 'shopping', label: 'Por comprar', icon: <ShoppingBasket size={16} /> },
 ];
 
@@ -79,6 +81,7 @@ export function InventoryView({ onImport }: { onImport: () => void }) {
         <InventoryStockTab items={items} archivedItems={archivedItems} usedToday={usedToday} onChanged={loadInventory} />
       )}
       {loaded && tab === 'recipes' && <RecipesTab key={recipesVersion} items={items} />}
+      {loaded && tab === 'cook' && <PreparationsTab items={items} onChanged={loadInventory} />}
       {loaded && tab === 'shopping' && <ShoppingTab items={items} />}
       {recipeImportOpen && (
         <RecipeImportDialog

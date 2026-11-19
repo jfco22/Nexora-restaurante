@@ -70,3 +70,11 @@
   .inventory-actions { grid-column: 1 / -1; }
   .inventory-form-row { grid-template-columns: 1fr; }
 }
+
+.preparation-row { cursor: default; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.preparation-row > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.preparation-row .primary-button { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.cook-lines { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 0; padding: 0; list-style: none; font-size: .82rem; }
+.cook-lines li { display: flex; justify-content: space-between; gap: 12px; color: #3b463f; }
+.cook-lines li.cook-short { color: #9a2f2f; font-weight: 600; }
+.cook-lines small { color: #758179; font-weight: 400; }
