@@ -70,3 +70,7 @@ Las fotos están en `public/menu` y se llaman igual que el producto (`Hamburgues
 
 En **Inventario → Importar recetas** se sube un CSV o Excel con las columnas `Producto; Insumo; Cantidad; Unidad; Ubicación` (nevera, estanteria o bodega; solo para insumos nuevos) (una fila por insumo de cada plato). Los productos se buscan por nombre y los insumos también; si el insumo no existe y la fila trae `Unidad`, se crea en la bodega con stock 0. `docs/recetas-el-taita-borrador.csv` trae los insumos de cada plato según la carta, con las cantidades por completar.
 
+## Cocinar por tandas (preparaciones)
+
+Para lo que se cocina en olla y se vende por porción (birria, carne de hamburguesa): en **Inventario → Cocinar** se importa un archivo con `Preparación; Rinde; Unidad rinde; Insumo; Cantidad; Unidad; Ubicación` (ver `docs/preparaciones-el-taita.csv`). La preparación crea un insumo con su nombre ("Birria cocida"). Al pulsar **Cocinar** se descuentan los insumos crudos y se suma lo cocinado; las recetas de los platos usan ese insumo (`docs/recetas-birriamen-con-tanda.csv`), así que la carta se agota cuando se acaba lo cocinado. Requiere la migración `20261118230000_add_nexora_preparations.sql` (ejecutarla en SQL Editor).
+
