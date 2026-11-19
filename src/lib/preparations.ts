@@ -3,22 +3,26 @@ import { userFacingError } from '@/lib/tableAccount';
 import type { CatalogProduct, RecipeLine } from '@/lib/inventory';
 
 export type PreparationLine = { item_id: string; quantity: number };
+/** Resultado adicional de la preparación (ej. la carne, además del caldo). */
+export type PreparationOutput = { item_id: string; quantity: number };
 export type Preparation = {
   id: string;
   output_item_id: string;
   yield_quantity: number;
   lines: PreparationLine[];
+  extraOutputs: PreparationOutput[];
 };
 
 export async function fetchPreparations(): Promise<{ preparations: Preparation[]; error: string | null }> {
   const { data, error } = await supabase
     .from('nexora_preparations')
-    .select('id, output_item_id, yield_quantity, nexora_preparation_lines(item_id, quantity)')
+    .select('id, output_item_id, yield_quantity, nexora_preparation_lines(item_id, quantity), nexora_preparation_outputs(item_id, quantity)')
     .eq('is_active', true);
   if (error) return { preparations: [], error: 'No pudimos cargar las preparaciones.' };
   const rows = (data ?? []) as unknown as {
     id: string; output_item_id: string; yield_quantity: number | string;
     nexora_preparation_lines: { item_id: string; quantity: number | string }[] | null;
+    nexora_preparation_outputs: { item_id: string; quantity: number | string }[] | null;
   }[];
   return {
     preparations: rows.map((row) => ({
@@ -26,6 +30,7 @@ export async function fetchPreparations(): Promise<{ preparations: Preparation[]
       output_item_id: row.output_item_id,
       yield_quantity: Number(row.yield_quantity),
       lines: (row.nexora_preparation_lines ?? []).map((line) => ({ item_id: line.item_id, quantity: Number(line.quantity) })),
+      extraOutputs: (row.nexora_preparation_outputs ?? []).map((output) => ({ item_id: output.item_id, quantity: Number(output.quantity) })),
     })),
     error: null,
   };

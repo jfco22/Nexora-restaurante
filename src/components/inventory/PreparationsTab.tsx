@@ -62,15 +62,25 @@ export function PreparationsTab({ items, onChanged }: PreparationsTabProps) {
           {sorted.map((prep: Preparation) => {
             const output = itemById.get(prep.output_item_id);
             if (!output) return null;
-            const available = portionsFromQuantity(prep.output_item_id, Math.max(output.current_stock, 0), products, recipeLines);
+            const outputs = [
+              { item_id: prep.output_item_id, quantity: prep.yield_quantity },
+              ...prep.extraOutputs,
+            ].flatMap((entry) => {
+              const item = itemById.get(entry.item_id);
+              return item ? [{ item, perBatch: entry.quantity }] : [];
+            });
             return (
               <li key={prep.id}>
                 <div className="recipe-row preparation-row">
                   <div>
                     <strong>{output.name}</strong>
-                    <small>Cada tanda rinde {formatQuantity(prep.yield_quantity, output.unit)} · {prep.lines.length} insumos</small>
-                    <small>Disponible ahora: {formatQuantity(output.current_stock, output.unit)}</small>
-                    <small>{portionsText(available)}</small>
+                    <small>{prep.lines.length} insumos por tanda</small>
+                    {outputs.map((entry) => (
+                      <small key={entry.item.id}>
+                        {entry.item.name}: rinde {formatQuantity(entry.perBatch, entry.item.unit)} por tanda · hay {formatQuantity(entry.item.current_stock, entry.item.unit)}
+                        {' → '}{portionsText(portionsFromQuantity(entry.item.id, Math.max(entry.item.current_stock, 0), products, recipeLines))}
+                      </small>
+                    ))}
                   </div>
                   <button className="primary-button" type="button" onClick={() => { setNotice(null); setCooking(prep); }}><ChefHat size={16} /> Cocinar</button>
                 </div>
@@ -117,9 +127,14 @@ function CookDialog({ preparation, itemById, products, recipeLines, onClose, onC
     return { line, item, needed, short: item ? item.current_stock < needed : true };
   });
   const missing = rows.filter((row) => row.short);
-  const produced = batches === null ? 0 : Math.round(preparation.yield_quantity * batches * 1000) / 1000;
-  const newStock = (output?.current_stock ?? 0) + produced;
-  const portions = portionsFromQuantity(preparation.output_item_id, Math.max(newStock, 0), products, recipeLines);
+  const producedRows = [{ item_id: preparation.output_item_id, quantity: preparation.yield_quantity }, ...preparation.extraOutputs].flatMap((entry) => {
+    const item = itemById.get(entry.item_id);
+    if (!item) return [];
+    const produced = batches === null ? 0 : Math.round(entry.quantity * batches * 1000) / 1000;
+    const newStock = item.current_stock + produced;
+    return [{ item, produced, newStock, portions: portionsFromQuantity(item.id, Math.max(newStock, 0), products, recipeLines) }];
+  });
+  const newStock = (output?.current_stock ?? 0) + (producedRows[0]?.produced ?? 0);
 
   if (!output) return null;
 
@@ -167,8 +182,12 @@ function CookDialog({ preparation, itemById, products, recipeLines, onClose, onC
 
           <div className="inventory-preview">
             <span>Se suman al inventario</span>
-            <strong>{formatQuantity(produced, output.unit)} de {output.name}</strong>
-            <small>Quedará en {formatQuantity(newStock, output.unit)} = {portionsText(portions)}</small>
+            {producedRows.map((row) => (
+              <div key={row.item.id}>
+                <strong>{formatQuantity(row.produced, row.item.unit)} de {row.item.name}</strong>
+                <small>Quedará en {formatQuantity(row.newStock, row.item.unit)} = {portionsText(row.portions)}</small>
+              </div>
+            ))}
           </div>
 
           {batches === null && <p className="auth-feedback error" role="alert">Escribe un número de tandas entre 0,5 y 100.</p>}
