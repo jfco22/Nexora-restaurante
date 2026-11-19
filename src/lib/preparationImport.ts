@@ -6,14 +6,15 @@ import {
   type PlanItem, type PlanLine, type RecipeLocation, type RecipeRow, type RecipeUnit,
 } from '@/lib/recipeImport';
 
-export const PREPARATION_HEADERS = ['Preparación', 'Rinde', 'Unidad rinde', 'Insumo', 'Cantidad', 'Unidad', 'Ubicación'];
+export const PREPARATION_HEADERS = ['Preparación', 'Rinde', 'Unidad rinde', 'Tipo', 'Insumo', 'Cantidad', 'Unidad', 'Ubicación'];
 
-type Field = 'name' | 'yield' | 'yieldUnit' | 'item' | 'quantity' | 'unit' | 'location';
+type Field = 'name' | 'yield' | 'yieldUnit' | 'kind' | 'item' | 'quantity' | 'unit' | 'location';
 
 const FIELD_BY_HEADER: Record<string, Field> = {
   preparacion: 'name', 'nombre de la preparacion': 'name', tanda: 'name',
   rinde: 'yield', rendimiento: 'yield', 'rinde por tanda': 'yield',
   'unidad rinde': 'yieldUnit', 'unidad del rendimiento': 'yieldUnit', 'unidad de rinde': 'yieldUnit',
+  tipo: 'kind', 'tipo de fila': 'kind',
   insumo: 'item', ingrediente: 'item',
   cantidad: 'quantity', 'cantidad por tanda': 'quantity',
   unidad: 'unit', 'unidad del insumo': 'unit',
@@ -27,10 +28,23 @@ export type PreparationSpec = {
   errors: string[];
 };
 
-export type ParsedPreparations = { rows: RecipeRow[]; specs: PreparationSpec[]; missingColumns: string[] };
+/** Fila "resultado": un producto adicional que sale de la misma tanda (ej. la carne, además del caldo). */
+export type ExtraOutputRow = {
+  rowNumber: number;
+  preparation: string;
+  item: string;
+  quantity: number | null;
+  unit: RecipeUnit | null;
+  location: RecipeLocation | null;
+  errors: string[];
+};
+
+export type ParsedPreparations = { rows: RecipeRow[]; extras: ExtraOutputRow[]; specs: PreparationSpec[]; missingColumns: string[] };
+
+const isResultKind = (value: string): boolean => ['resultado', 'sale', 'produce', 'rinde', 'salida'].includes(normalizeName(value));
 
 export function parsePreparationRecords(records: Record<string, unknown>[]): ParsedPreparations {
-  if (records.length === 0) return { rows: [], specs: [], missingColumns: [] };
+  if (records.length === 0) return { rows: [], extras: [], specs: [], missingColumns: [] };
   const fieldByColumn = new Map<string, Field>();
   for (const column of Object.keys(records[0] ?? {})) {
     const field = FIELD_BY_HEADER[normalizeName(column)];
@@ -39,9 +53,10 @@ export function parsePreparationRecords(records: Record<string, unknown>[]): Par
   const found = new Set(fieldByColumn.values());
   const labels: Record<string, string> = { name: 'Preparación', yield: 'Rinde', item: 'Insumo', quantity: 'Cantidad' };
   const missingColumns = Object.keys(labels).filter((field) => !found.has(field as Field)).map((field) => labels[field] ?? field);
-  if (missingColumns.length > 0) return { rows: [], specs: [], missingColumns };
+  if (missingColumns.length > 0) return { rows: [], extras: [], specs: [], missingColumns };
 
   const rows: RecipeRow[] = [];
+  const extras: ExtraOutputRow[] = [];
   const specs = new Map<string, PreparationSpec>();
   records.forEach((record: Record<string, unknown>, index: number) => {
     const values: Partial<Record<Field, unknown>> = {};
@@ -62,6 +77,11 @@ export function parsePreparationRecords(records: Record<string, unknown>[]): Par
     const locationText = String(values.location ?? '').trim();
     const location = locationText === '' ? null : parseLocation(locationText);
     if (locationText !== '' && location === null) errors.push(`Ubicación no reconocida: "${locationText}" (usa nevera, estanteria o bodega)`);
+
+    if (isResultKind(String(values.kind ?? ''))) {
+      extras.push({ rowNumber: index + 2, preparation: name, item, quantity, unit, location, errors });
+      return;
+    }
 
     // Rendimiento: se toma de la primera fila de la preparación; las demás deben coincidir si lo repiten.
     const yieldText = String(values.yield ?? '').trim();
@@ -85,7 +105,7 @@ export function parsePreparationRecords(records: Record<string, unknown>[]): Par
     }
     rows.push({ rowNumber: index + 2, product: name, item, quantity, unit, unitText, location, errors });
   });
-  return { rows, specs: Array.from(specs.values()), missingColumns: [] };
+  return { rows, extras, specs: Array.from(specs.values()), missingColumns: [] };
 }
 
 export type PlannedPreparation = {
@@ -96,6 +116,16 @@ export type PlannedPreparation = {
   /** Rendimiento por tanda en la unidad del insumo resultado. */
   yieldQuantity: number;
   lines: PlanLine[];
+  /** Resultados adicionales de la misma tanda (ej. la carne). */
+  extraOutputs: PlannedExtraOutput[];
+};
+
+export type PlannedExtraOutput = {
+  name: string;
+  itemId: string | null;
+  newItem: { name: string; unit: RecipeUnit; location: RecipeLocation } | null;
+  /** Cantidad por tanda en la unidad del insumo. */
+  quantity: number;
 };
 
 export type PreparationPlan = {
@@ -132,6 +162,31 @@ export function buildPreparationPlan(parsed: ParsedPreparations, items: PlanItem
     for (const line of badLines.slice(0, 3)) reasons.push(`Fila ${line.row.rowNumber}: ${line.errors.join('; ')}`);
     if (badLines.length > 0) reasons.push('Una preparación solo se importa completa: corrige esas filas.');
 
+    const extraOutputs: PlannedExtraOutput[] = [];
+    for (const extra of parsed.extras.filter((candidate: ExtraOutputRow) => normalizeName(candidate.preparation) === key)) {
+      const problems = [...extra.errors];
+      const extraKey = normalizeName(extra.item);
+      const found = itemByName.get(extraKey);
+      let amount = extra.quantity;
+      let newItem: PlannedExtraOutput['newItem'] = null;
+      if (extraKey === key) problems.push('El resultado adicional no puede llamarse igual que la preparación');
+      if (lines.some((line: PlanLine) => normalizeName(line.row.item) === extraKey)) problems.push('Un resultado no puede ser también un insumo gastado en la misma preparación');
+      if (extra.item !== '' && amount !== null && amount > 0) {
+        if (found) {
+          if (extra.unit) {
+            amount = convertQuantity(amount, extra.unit, found.unit);
+            if (amount === null) problems.push(`"${extra.item}" está en ${found.unit} y la fila en ${extra.unit}: no se pueden convertir`);
+          }
+        } else if (extra.unit) {
+          newItem = { name: extra.item, unit: extra.unit, location: extra.location ?? 'nevera' };
+        } else {
+          problems.push(`"${extra.item}" no existe como insumo: agrega la unidad para crearlo`);
+        }
+      }
+      if (problems.length > 0) reasons.push(`Fila ${extra.rowNumber} (resultado): ${problems.join('; ')}`);
+      else if (amount !== null) extraOutputs.push({ name: extra.item, itemId: found?.id ?? null, newItem, quantity: amount });
+    }
+
     const existingOutput = itemByName.get(key);
     let yieldQuantity = spec.yieldQuantity;
     let newOutput: PlannedPreparation['newOutput'] = null;
@@ -151,9 +206,10 @@ export function buildPreparationPlan(parsed: ParsedPreparations, items: PlanItem
       continue;
     }
     for (const line of lines) if (line.newItemName) usedNewItems.add(normalizeName(line.newItemName));
-    preparations.push({ name: spec.name, outputItemId: existingOutput?.id ?? null, newOutput, yieldQuantity, lines });
+    preparations.push({ name: spec.name, outputItemId: existingOutput?.id ?? null, newOutput, yieldQuantity, lines, extraOutputs });
   }
 
   const newItems = base.newItems.filter((item) => usedNewItems.has(normalizeName(item.name)));
+  // Un resultado extra que también se pide como insumo nuevo en otra preparación se crea una sola vez (lo dedupe la API).
   return { lines: base.lines, preparations, rejected, newItems };
 }

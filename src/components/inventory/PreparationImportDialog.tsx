@@ -13,9 +13,11 @@ import '@/components/inventory/menu-import.css';
 type Props = { onClose: () => void; onImported: () => Promise<void> };
 
 const EXAMPLE_ROWS: (string | number)[][] = [
-  ['Carne de hamburguesa', 3000, 'g', 'Carne de res molida', 3000, 'g', 'nevera'],
-  ['Carne de hamburguesa', '', '', 'Sal', 30, 'g', 'estanteria'],
-  ['Carne de hamburguesa', '', '', 'Pimienta', 6, 'g', 'estanteria'],
+  ['Carne de hamburguesa', 3000, 'g', '', 'Carne de res molida', 3000, 'g', 'nevera'],
+  ['Carne de hamburguesa', '', '', '', 'Sal', 30, 'g', 'estanteria'],
+  ['Carne de hamburguesa', '', '', '', 'Pimienta', 6, 'g', 'estanteria'],
+  ['Caldo de birria', 3040, 'g', '', 'Costilla de res', 2000, 'g', 'nevera'],
+  ['Caldo de birria', '', '', 'resultado', 'Carne de birria', 700, 'g', 'nevera'],
 ];
 
 export function PreparationImportDialog({ onClose, onImported }: Props) {
@@ -106,12 +108,22 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
       prep.lines.forEach((line, index: number) => {
         const item = itemById.get(line.item_id);
         if (!item) return;
-        data.push([output.name, index === 0 ? prep.yield_quantity : '', index === 0 ? output.unit : '', item.name, line.quantity, item.unit, item.storage_location]);
+        data.push([output.name, index === 0 ? prep.yield_quantity : '', index === 0 ? output.unit : '', '', item.name, line.quantity, item.unit, item.storage_location]);
       });
+      for (const extra of prep.extraOutputs) {
+        const item = itemById.get(extra.item_id);
+        if (item) data.push([output.name, '', '', 'resultado', item.name, extra.quantity, item.unit, item.storage_location]);
+      }
     }
     downloadCsv('preparaciones-actuales.csv', toCsv(PREPARATION_HEADERS, data));
   };
 
+  const newItemCount = plan
+    ? new Set([
+      ...plan.newItems.map((item) => item.name.toLowerCase()),
+      ...plan.preparations.flatMap((prep: PlannedPreparation) => [prep.newOutput?.name, ...prep.extraOutputs.map((extra) => extra.newItem?.name)]).filter((name): name is string => Boolean(name)).map((name: string) => name.toLowerCase()),
+    ]).size
+    : 0;
   const validRows = plan ? plan.lines.filter((line) => plan.preparations.some((prep: PlannedPreparation) => prep.lines.includes(line))).length : 0;
 
   return (
@@ -138,7 +150,8 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
               <tr><td>Preparación</td><td className="required">Sí</td><td>Lo que sale de la olla, por ejemplo "Birria cocida". Se crea como insumo con ese nombre</td></tr>
               <tr><td>Rinde</td><td className="required">Sí</td><td>Cuánto sale en total de UNA tanda (en la primera fila de cada preparación)</td></tr>
               <tr><td>Unidad rinde</td><td>Si es nueva</td><td>g, kg, ml, l o unidad. Necesaria para crear el insumo resultado</td></tr>
-              <tr><td>Insumo</td><td className="required">Sí</td><td>El insumo crudo que gasta la tanda</td></tr>
+              <tr><td>Tipo</td><td>No</td><td>Déjalo vacío para los insumos que gasta la tanda. Escribe <strong>resultado</strong> en una fila si la misma tanda produce algo más (ej. caldo Y carne): en esa fila, Insumo es lo que sale y Cantidad cuánto sale por tanda</td></tr>
+              <tr><td>Insumo</td><td className="required">Sí</td><td>El insumo crudo que gasta la tanda (o, en filas "resultado", lo que sale de más)</td></tr>
               <tr><td>Cantidad</td><td className="required">Sí</td><td>Cuánto se gasta en la tanda completa</td></tr>
               <tr><td>Unidad</td><td>No</td><td>g, kg, ml, l o unidad (se convierte si hace falta; con ella se crea el insumo si no existe)</td></tr>
               <tr><td>Ubicación</td><td>No</td><td>nevera, estanteria o bodega, solo para insumos nuevos</td></tr>
@@ -174,8 +187,7 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
             <h3>Vista previa</h3>
             <p className="muted">
               {plan.preparations.length} preparaciones listas ({validRows} filas){plan.rejected.length > 0 ? `, ${plan.rejected.length} con problemas (se omiten)` : ''}.
-              {plan.newItems.length + plan.preparations.filter((prep: PlannedPreparation) => prep.newOutput).length > 0
-                ? ` Se crearán ${plan.newItems.length + plan.preparations.filter((prep: PlannedPreparation) => prep.newOutput).length} insumos nuevos con stock 0.` : ''}
+              {newItemCount > 0 ? ` Se crearán ${newItemCount} insumos nuevos con stock 0.` : ''}
             </p>
             {plan.rejected.map((entry) => (
               <p key={entry.name} className="auth-feedback error" role="alert"><strong>{entry.name}:</strong> {entry.reasons.join(' ')}</p>
@@ -187,7 +199,10 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
                   {plan.preparations.map((prep: PlannedPreparation) => (
                     <tr key={prep.name} className="row-ok">
                       <td>{prep.name}{prep.newOutput ? ' (nuevo)' : ''}</td>
-                      <td>{prep.yieldQuantity.toLocaleString('es-CO')} {prep.newOutput?.unit ?? items.find((item: InventoryItem) => item.id === prep.outputItemId)?.unit ?? ''}</td>
+                      <td>
+                        {prep.yieldQuantity.toLocaleString('es-CO')} {prep.newOutput?.unit ?? items.find((item: InventoryItem) => item.id === prep.outputItemId)?.unit ?? ''}
+                        {prep.extraOutputs.map((extra) => <div key={extra.name}>+ {extra.quantity.toLocaleString('es-CO')} de {extra.name}{extra.newItem ? ' (nuevo)' : ''}</div>)}
+                      </td>
                       <td>
                         {prep.lines.map((line) => `${line.row.item}${line.newItemName ? ' (nuevo)' : ''} ${line.quantity ?? ''}`).join(' · ')}
                         {prep.lines.some((line) => line.newItemName) ? ` — ubicaciones nuevas: ${Array.from(new Set(prep.lines.filter((line) => line.newItemName).map((line) => storageLabels[line.row.location ?? 'bodega']))).join(', ')}` : ''}

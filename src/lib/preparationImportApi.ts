@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { userFacingError } from '@/lib/tableAccount';
 import { normalizeName, type PlanLine } from '@/lib/recipeImport';
-import type { PlannedPreparation, PreparationPlan } from '@/lib/preparationImport';
+import type { PlannedExtraOutput, PlannedPreparation, PreparationPlan } from '@/lib/preparationImport';
 
 export type PreparationImportOutcome = {
   ok: boolean;
@@ -23,6 +23,7 @@ export async function applyPreparationPlan(plan: PreparationPlan): Promise<Prepa
   const candidates = [
     ...plan.newItems,
     ...plan.preparations.filter((prep: PlannedPreparation) => prep.newOutput).map((prep: PlannedPreparation) => prep.newOutput as NonNullable<PlannedPreparation['newOutput']>),
+    ...plan.preparations.flatMap((prep: PlannedPreparation) => prep.extraOutputs.filter((extra: PlannedExtraOutput) => extra.newItem).map((extra: PlannedExtraOutput) => extra.newItem as NonNullable<PlannedExtraOutput['newItem']>)),
   ];
   const toCreate = candidates.filter((item, index: number) => candidates.findIndex((other) => normalizeName(other.name) === normalizeName(item.name)) === index);
   const itemIds = new Map<string, string>();
@@ -72,6 +73,21 @@ export async function applyPreparationPlan(plan: PreparationPlan): Promise<Prepa
     const { error: linesError } = await supabase
       .from('nexora_preparation_lines').insert(lines.map((line) => ({ preparation_id: preparationId, ...line })));
     if (linesError) return failed(userFacingError(linesError), { itemsCreated, preparationsSaved: saved });
+
+    // Resultados adicionales: se reemplazan por los del archivo.
+    const outputs: { item_id: string; quantity: number }[] = [];
+    for (const extra of prep.extraOutputs) {
+      const extraId = extra.itemId ?? itemIds.get(normalizeName(extra.name));
+      if (!extraId) return failed(`Falta resolver el resultado "${extra.name}".`, { itemsCreated, preparationsSaved: saved });
+      outputs.push({ item_id: extraId, quantity: extra.quantity });
+    }
+    const { error: clearError } = await supabase.from('nexora_preparation_outputs').delete().eq('preparation_id', preparationId);
+    if (clearError) return failed(userFacingError(clearError), { itemsCreated, preparationsSaved: saved });
+    if (outputs.length > 0) {
+      const { error: outputsError } = await supabase
+        .from('nexora_preparation_outputs').insert(outputs.map((output) => ({ preparation_id: preparationId, ...output })));
+      if (outputsError) return failed(userFacingError(outputsError), { itemsCreated, preparationsSaved: saved });
+    }
     saved += 1;
   }
 
