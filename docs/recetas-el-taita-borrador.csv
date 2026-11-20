@@ -17,8 +17,14 @@ Hamburguesa La Jornalera;Tomate;0,25;unidad;estanteria
 Hamburguesa La Jornalera;Lechuga;1;unidad;nevera
 Hamburguesa La Jornalera;Salsa de la casa;;ml;nevera
 Perro Caliente Normal;Pan artesanal perro;1;unidad;estanteria
-Perro Caliente Normal;Salchicha;1;unidad;nevera
-Perro Caliente Normal;Papa fosforito;;g;estanteria
+Perro Caliente Normal;Salchicha americana;1;unidad;nevera
+Perro Caliente Normal;Papa fosforito;30;g;estanteria
+Perro Caliente Normal;Salsa de la casa;10;ml;nevera
+Perro Caliente Normal;Queso doble crema;1;unidad;nevera
+Perro Caliente Normal;Salsa rosada;10;ml;nevera
+Perro Caliente Normal;Salsa mostaza;10;ml;nevera
+Perro Caliente Normal;Salsa roja;10;ml;nevera
+Perro Caliente Normal;Huevo de codorniz;1;unidad;nevera
 Perro con una carne;Pan artesanal perro;1;unidad;estanteria
 Perro Champiñones + Pollo;Pan artesanal perro;1;unidad;estanteria
 Perro Champiñones + Pollo;Pollo desmechado;;g;nevera
