@@ -74,3 +74,12 @@ En **Inventario → Importar recetas** se sube un CSV o Excel con las columnas `
 
 Para lo que se cocina en olla y se vende por porción (birria, carne de hamburguesa): en **Inventario → Cocinar** se importa un archivo con `Preparación; Rinde; Unidad rinde; Insumo; Cantidad; Unidad; Ubicación` (ver `docs/preparaciones-el-taita.csv`). La preparación crea un insumo con su nombre ("Caldo de birria"); una fila con `Tipo = resultado` agrega otro producto de la misma tanda ("Carne de birria"). Al pulsar **Cocinar** se descuentan los insumos crudos y se suma lo cocinado; las recetas de los platos usan ese insumo (`docs/recetas-birriamen-con-tanda.csv`), así que la carta se agota cuando se acaba lo cocinado. Requiere la migración `20261118230000_add_nexora_preparations.sql` (ejecutarla en SQL Editor) y, para varios resultados, `20261119230000_add_nexora_preparation_extra_outputs.sql`.
 
+
+## Productos con opciones a escoger (perros con carne)
+
+Algunos productos piden escoger al pedir (ej. "Perro con dos carnes": 2 carnes, se puede repetir). El selector aparece
+en el menú QR, en la carta del personal y al agregar a una cuenta de mesa. Cada opción descuenta sus propios insumos
+(además de la receta base del producto) y la cocina ve las carnes escogidas en el nombre de la línea.
+
+1. Aplicar la migración `20261120230000_add_nexora_product_option_choices.sql` en Supabase (SQL Editor).
+2. Tener cargados el menú y los insumos, y correr `docs/opciones-perros-el-taita.sql` (se puede repetir sin problema).

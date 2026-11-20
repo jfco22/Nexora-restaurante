@@ -63,7 +63,7 @@ export function TableAccountPanel({ tableId, tableName, onClose, onChanged }: Ta
   const canCharge = !!account && !isDraft && account.lines.length > 0 && balance > 0;
   const canClose = !!account && account.status === 'completed' && balance === 0 && !hasPending;
 
-  const addItems = (items: { product_id: string; quantity: number }[]): Promise<string | null> => {
+  const addItems = (items: { product_id: string; quantity: number; choices?: string[] }[]): Promise<string | null> => {
     if (!account) return Promise.resolve('La cuenta ya no está disponible.');
     return runAction('add_nexora_table_order_items', { order_id_input: account.id, items }, 'Productos agregados a la cuenta.');
   };

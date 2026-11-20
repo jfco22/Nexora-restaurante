@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Minus, Plus, Search, Utensils, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
+import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions } from '@/lib/productOptions';
+import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
 
 type PickerProduct = {
   id: string;
@@ -22,7 +24,7 @@ type ProductRow = {
 };
 
 type AccountProductPickerProps = {
-  onAddItems: (items: { product_id: string; quantity: number }[]) => Promise<string | null>;
+  onAddItems: (items: { product_id: string; quantity: number; choices?: string[] }[]) => Promise<string | null>;
   onClose: () => void;
 };
 
@@ -32,6 +34,8 @@ export function AccountProductPicker({ onAddItems, onClose }: AccountProductPick
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<Record<string, number>>({});
+  const options = useProductOptions();
+  const [picking, setPicking] = useState<PickerProduct | null>(null);
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -67,6 +71,19 @@ export function AccountProductPicker({ onAddItems, onClose }: AccountProductPick
 
   const cartCount = Object.values(cart).reduce((total: number, quantity: number) => total + quantity, 0);
 
+  const updateProduct = (product: PickerProduct, change: number): void => {
+    if (options[product.id]) {
+      if (change > 0) {
+        setPicking(product);
+      } else {
+        const lastKey = Object.keys(cart).filter((key: string) => parseCartKey(key).productId === product.id).pop();
+        if (lastKey) updateCart(lastKey, change);
+      }
+      return;
+    }
+    updateCart(product.id, change);
+  };
+
   const updateCart = (productId: string, change: number): void => {
     setCart((current: Record<string, number>) => {
       const nextQuantity = (current[productId] ?? 0) + change;
@@ -82,7 +99,7 @@ export function AccountProductPicker({ onAddItems, onClose }: AccountProductPick
   const submit = async (): Promise<void> => {
     setBusy(true);
     setSubmitError(null);
-    const items = Object.entries(cart).map(([productId, quantity]: [string, number]) => ({ product_id: productId, quantity }));
+    const items = cartItems(cart);
     const error = await onAddItems(items);
     setBusy(false);
     if (error) setSubmitError(error);
@@ -111,7 +128,7 @@ export function AccountProductPicker({ onAddItems, onClose }: AccountProductPick
           {!loading && !loadError && filteredProducts.length === 0 && <p className="account-empty">No hay productos que coincidan.</p>}
           <div className="picker-grid">
             {filteredProducts.map((product: PickerProduct) => {
-              const quantity = cart[product.id] ?? 0;
+              const quantity = cartQuantityOfProduct(cart, product.id);
               return (
                 <article key={product.id} className={`picker-card ${quantity > 0 ? 'selected' : ''}`}>
                   {product.image_url ? <img src={product.image_url} alt={product.name} /> : <div className="picker-placeholder"><Utensils size={22} /></div>}
@@ -122,12 +139,12 @@ export function AccountProductPicker({ onAddItems, onClose }: AccountProductPick
                     <div className="picker-card-bottom">
                       <strong>{formatCurrency(product.price_cop)}</strong>
                       {quantity === 0 ? (
-                        <button className="add-button" type="button" onClick={() => updateCart(product.id, 1)}><Plus size={14} /> Agregar</button>
+                        <button className="add-button" type="button" onClick={() => updateProduct(product, 1)}><Plus size={14} /> Agregar</button>
                       ) : (
                         <div className="quantity-control">
-                          <button type="button" aria-label={`Quitar uno de ${product.name}`} onClick={() => updateCart(product.id, -1)}><Minus size={13} /></button>
+                          <button type="button" aria-label={`Quitar uno de ${product.name}`} onClick={() => updateProduct(product, -1)}><Minus size={13} /></button>
                           <b>{quantity}</b>
-                          <button type="button" aria-label={`Agregar uno de ${product.name}`} onClick={() => updateCart(product.id, 1)}><Plus size={13} /></button>
+                          <button type="button" aria-label={`Agregar uno de ${product.name}`} onClick={() => updateProduct(product, 1)}><Plus size={13} /></button>
                         </div>
                       )}
                     </div>
@@ -138,6 +155,16 @@ export function AccountProductPicker({ onAddItems, onClose }: AccountProductPick
           </div>
         </div>
 
+        {Object.keys(cart).some((key: string) => parseCartKey(key).choiceIds.length > 0) && (
+          <ul className="account-empty">
+            {Object.entries(cart).filter(([key]: [string, number]) => parseCartKey(key).choiceIds.length > 0).map(([key, quantity]: [string, number]) => {
+              const { productId, choiceIds } = parseCartKey(key);
+              const product = products.find((item: PickerProduct) => item.id === productId);
+              return <li key={key}>{quantity} × {product?.name} ({choiceNames(options[productId], choiceIds)})</li>;
+            })}
+          </ul>
+        )}
+        {picking && options[picking.id] && <OptionPickerDialog productName={picking.name} option={options[picking.id]} onClose={() => setPicking(null)} onConfirm={(choiceIds: string[]) => { updateCart(cartKey(picking.id, choiceIds), 1); setPicking(null); }} />}
         <footer className="account-footer picker-footer">
           {submitError && <p className="auth-feedback error" role="alert">{submitError}</p>}
           <button className="primary-button full-width" type="button" disabled={busy || cartCount === 0} onClick={() => void submit()}>

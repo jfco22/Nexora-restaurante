@@ -43,6 +43,8 @@ import { fetchOpenCashShift, formatOpenedAt, type CashShiftSummary } from '@/lib
 import { MANAGING_ROLES, roleLabels } from '@/lib/staffRoles';
 import { TeamView } from '@/components/equipo/TeamView';
 import { ForgotPasswordScreen } from '@/components/auth/ForgotPasswordScreen';
+import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
+import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions, type ProductOptionMap } from '@/lib/productOptions';
 
 type View = 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo';
 
@@ -83,6 +85,7 @@ function App() {
   const [view, setView] = useState<View>('inicio');
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const productOptions = useProductOptions();
   const [dataError, setDataError] = useState<string | null>(null);
   const [orderMessage, setOrderMessage] = useState<string | null>(null);
   const [category, setCategory] = useState('Todos');
@@ -184,8 +187,8 @@ function App() {
   }, [session]);
 
   const cartCount = Object.values(cart).reduce((total: number, quantity: number) => total + quantity, 0);
-  const cartTotal = Object.entries(cart).reduce((total: number, [productId, quantity]: [string, number]) => {
-    const product = products.find((item: Product) => item.id === productId);
+  const cartTotal = Object.entries(cart).reduce((total: number, [key, quantity]: [string, number]) => {
+    const product = products.find((item: Product) => item.id === parseCartKey(key).productId);
     return total + (product?.price ?? 0) * quantity;
   }, 0);
 
@@ -208,7 +211,7 @@ function App() {
   };
 
   const submitOrder = async (orderCart: Record<string, number>, guestName: string | null = null, guestPhone: string | null = null): Promise<OrderSubmitResult> => {
-    const items = Object.entries(orderCart).map(([productId, quantity]: [string, number]) => ({ product_id: productId, quantity }));
+    const items = cartItems(orderCart);
     if (items.length === 0) return { ok: false, message: 'Agrega productos antes de continuar.' };
     const requestedTotal = items.reduce((total: number, item: { product_id: string; quantity: number }) => total + (products.find((product: Product) => product.id === item.product_id)?.price ?? 0) * item.quantity, 0);
     setOrderMessage(null);
@@ -225,7 +228,7 @@ function App() {
     return { ok: true, orderNumber: data[0].order_number };
   };
 
-  if (IS_MENU_LINK) return <GuestExperience products={products} onSubmitOrder={submitOrder} />;
+  if (IS_MENU_LINK) return <GuestExperience products={products} options={productOptions} onSubmitOrder={submitOrder} />;
   if (authLoading) return <div className="auth-loading">Cargando Nexora...</div>;
   if (!session && !guestMode && !forgotPassword) return <AuthScreen onGuestAccess={() => setGuestMode(true)} onForgotPassword={() => setForgotPassword(true)} />;
   if (!session && forgotPassword) return <ForgotPasswordScreen onBack={() => setForgotPassword(false)} />;
@@ -285,7 +288,7 @@ function App() {
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}
         {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} />}
         {dataError && <div className="data-notice" role="alert">{dataError}</div>}
-        {view === 'carta' && <MenuOrders products={products} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={orderMessage} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={() => void submitOrder(cart)} onImportMenu={profile && MANAGING_ROLES.includes(profile.role) ? () => setMenuImportOpen(true) : undefined} />}
+        {view === 'carta' && <MenuOrders products={products} options={productOptions} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={orderMessage} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={() => void submitOrder(cart)} onImportMenu={profile && MANAGING_ROLES.includes(profile.role) ? () => setMenuImportOpen(true) : undefined} />}
       </main>
     </div>
   );
@@ -332,10 +335,24 @@ function QuickCard({ icon, label, value, action, onClick }: { icon: React.ReactN
   return <article className="quick-card"><div className="quick-card-top"><span>{icon}</span><ShoppingBag size={15} /></div><p>{label}</p><strong>{value}</strong><button className="text-button" type="button" onClick={onClick}>{action} <ArrowUpRight size={14} /></button></article>;
 }
 
-type MenuOrdersProps = { products: Product[]; cart: Record<string, number>; cartCount: number; cartTotal: number; category: string; filteredProducts: Product[]; orderMessage: string | null; onCategoryChange: (category: string) => void; onSearchChange: (value: string) => void; onUpdateCart: (productId: string, change: number) => void; onSubmitOrder: () => void; onImportMenu?: () => void };
+type MenuOrdersProps = { products: Product[]; options: ProductOptionMap; cart: Record<string, number>; cartCount: number; cartTotal: number; category: string; filteredProducts: Product[]; orderMessage: string | null; onCategoryChange: (category: string) => void; onSearchChange: (value: string) => void; onUpdateCart: (productId: string, change: number) => void; onSubmitOrder: () => void; onImportMenu?: () => void };
 
-function MenuOrders({ products, cart, cartCount, cartTotal, category, filteredProducts, orderMessage, onCategoryChange, onSearchChange, onUpdateCart, onSubmitOrder, onImportMenu }: MenuOrdersProps) {
-  return <div className="page-wrap"><div className="page-heading"><div><p className="eyebrow">Catálogo · Operación</p><h1>Carta y pedidos</h1><p className="muted">Elige productos visualmente y arma una nueva cuenta.</p></div><div className="page-heading-actions">{onImportMenu && <button className="outline-button" type="button" onClick={onImportMenu}><Upload size={16} /> Importar o gestionar menú</button>}<div className="order-summary"><ShoppingBag size={18} /><strong>{cartCount}</strong><span>{formatCurrency(cartTotal)}</span></div></div></div><div className="menu-toolbar"><div className="category-tabs">{['Todos', ...Array.from(new Set(products.map((product: Product) => product.category)))].map((item: string) => <button key={item} className={category === item ? 'selected' : ''} onClick={() => onCategoryChange(item)} type="button">{item}</button>)}</div><label className="search-field"><Search size={16} /><input aria-label="Buscar en la carta" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSearchChange(event.target.value)} placeholder="Buscar producto" /></label></div><div className="menu-layout"><section className="product-grid">{products.length === 0 && <p className="muted">La carta no tiene productos activos todavía. Si ya importaste el menú, recarga la página; si sigue vacía, revisa la tabla de productos en la base de datos.</p>}{filteredProducts.map((product: Product) => <ProductCard key={product.id} product={product} quantity={cart[product.id] ?? 0} onUpdate={onUpdateCart} />)}</section><aside className="order-card"><div className="order-card-heading"><div><p className="eyebrow">Nueva cuenta</p><h2>Pedido actual</h2></div><button className="icon-button" type="button" aria-label="Cerrar pedido"><X size={17} /></button></div>{cartCount === 0 ? <div className="empty-order"><ShoppingBag size={28} /><strong>Tu pedido está vacío</strong><span>Agrega productos de la carta para comenzar.</span></div> : <><div className="order-lines">{Object.entries(cart).map(([productId, quantity]: [string, number]) => { const product = products.find((item: Product) => item.id === productId); if (!product) return null; return <div className="order-line" key={product.id}><div><strong>{product.name}</strong><span>{formatCurrency(product.price)} c/u</span></div><div className="quantity-control"><button onClick={() => onUpdateCart(product.id, -1)} type="button"><Minus size={13} /></button><b>{quantity}</b><button onClick={() => onUpdateCart(product.id, 1)} type="button"><Plus size={13} /></button></div></div>; })}</div><div className="order-total"><span>Total</span><strong>{formatCurrency(cartTotal)}</strong></div><button className="primary-button full-width" onClick={() => void onSubmitOrder()} type="button">Continuar pedido <ArrowUpRight size={16} /></button>{orderMessage && <p className="order-message" role="status">{orderMessage}</p>}</>}</aside></div></div>;
+function MenuOrders({ products, options, cart, cartCount, cartTotal, category, filteredProducts, orderMessage, onCategoryChange, onSearchChange, onUpdateCart, onSubmitOrder, onImportMenu }: MenuOrdersProps) {
+  const [picking, setPicking] = useState<Product | null>(null);
+  const updateProduct = (productId: string, change: number): void => {
+    if (change > 0 && options[productId]) {
+      const product = products.find((item: Product) => item.id === productId);
+      if (product) setPicking(product);
+      return;
+    }
+    if (change < 0 && options[productId]) {
+      const lastKey = Object.keys(cart).filter((key: string) => parseCartKey(key).productId === productId).pop();
+      if (lastKey) onUpdateCart(lastKey, change);
+      return;
+    }
+    onUpdateCart(productId, change);
+  };
+  return <div className="page-wrap">{picking && options[picking.id] && <OptionPickerDialog productName={picking.name} option={options[picking.id]} onClose={() => setPicking(null)} onConfirm={(choiceIds: string[]) => { onUpdateCart(cartKey(picking.id, choiceIds), 1); setPicking(null); }} />}<div className="page-heading"><div><p className="eyebrow">Catálogo · Operación</p><h1>Carta y pedidos</h1><p className="muted">Elige productos visualmente y arma una nueva cuenta.</p></div><div className="page-heading-actions">{onImportMenu && <button className="outline-button" type="button" onClick={onImportMenu}><Upload size={16} /> Importar o gestionar menú</button>}<div className="order-summary"><ShoppingBag size={18} /><strong>{cartCount}</strong><span>{formatCurrency(cartTotal)}</span></div></div></div><div className="menu-toolbar"><div className="category-tabs">{['Todos', ...Array.from(new Set(products.map((product: Product) => product.category)))].map((item: string) => <button key={item} className={category === item ? 'selected' : ''} onClick={() => onCategoryChange(item)} type="button">{item}</button>)}</div><label className="search-field"><Search size={16} /><input aria-label="Buscar en la carta" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSearchChange(event.target.value)} placeholder="Buscar producto" /></label></div><div className="menu-layout"><section className="product-grid">{products.length === 0 && <p className="muted">La carta no tiene productos activos todavía. Si ya importaste el menú, recarga la página; si sigue vacía, revisa la tabla de productos en la base de datos.</p>}{filteredProducts.map((product: Product) => <ProductCard key={product.id} product={product} quantity={cartQuantityOfProduct(cart, product.id)} onUpdate={updateProduct} />)}</section><aside className="order-card"><div className="order-card-heading"><div><p className="eyebrow">Nueva cuenta</p><h2>Pedido actual</h2></div><button className="icon-button" type="button" aria-label="Cerrar pedido"><X size={17} /></button></div>{cartCount === 0 ? <div className="empty-order"><ShoppingBag size={28} /><strong>Tu pedido está vacío</strong><span>Agrega productos de la carta para comenzar.</span></div> : <><div className="order-lines">{Object.entries(cart).map(([key, quantity]: [string, number]) => { const { productId, choiceIds } = parseCartKey(key); const product = products.find((item: Product) => item.id === productId); if (!product) return null; const detail = choiceNames(options[productId], choiceIds); return <div className="order-line" key={key}><div><strong>{product.name}</strong>{detail && <span>{detail}</span>}<span>{formatCurrency(product.price)} c/u</span></div><div className="quantity-control"><button onClick={() => onUpdateCart(key, -1)} type="button"><Minus size={13} /></button><b>{quantity}</b><button onClick={() => onUpdateCart(key, 1)} type="button"><Plus size={13} /></button></div></div>; })}</div><div className="order-total"><span>Total</span><strong>{formatCurrency(cartTotal)}</strong></div><button className="primary-button full-width" onClick={() => void onSubmitOrder()} type="button">Continuar pedido <ArrowUpRight size={16} /></button>{orderMessage && <p className="order-message" role="status">{orderMessage}</p>}</>}</aside></div></div>;
 }
 
 function ProductCard({ product, quantity, onUpdate }: { product: Product; quantity: number; onUpdate: (productId: string, change: number) => void }) {
@@ -344,7 +361,7 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
   return <article className={`product-card ${soldOut ? 'sold-out' : ''}`}><img src={product.image} alt={product.name} /><div className="product-info"><div><span className="product-category">{product.category}</span><h3>{product.name}</h3><p>{product.description}</p></div><div className="product-bottom"><strong>{formatCurrency(product.price)}</strong>{soldOut ? <span className="sold-out-badge">Agotado</span> : quantity === 0 ? <button className="add-button" onClick={() => onUpdate(product.id, 1)} type="button"><Plus size={16} /> Agregar</button> : <div className="quantity-control"><button onClick={() => onUpdate(product.id, -1)} type="button"><Minus size={14} /></button><b>{quantity}</b><button onClick={() => onUpdate(product.id, 1)} type="button" disabled={reachedStockLimit} aria-label="Agregar uno más"><Plus size={14} /></button></div>}</div></div></article>;
 }
 
-function GuestExperience({ products, onSubmitOrder }: { products: Product[]; onSubmitOrder: (orderCart: Record<string, number>, guestName: string, guestPhone: string) => Promise<OrderSubmitResult> }) {
+function GuestExperience({ products, options, onSubmitOrder }: { products: Product[]; options: ProductOptionMap; onSubmitOrder: (orderCart: Record<string, number>, guestName: string, guestPhone: string) => Promise<OrderSubmitResult> }) {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [category, setCategory] = useState('Todos');
   const [search, setSearch] = useState('');
@@ -352,7 +369,7 @@ function GuestExperience({ products, onSubmitOrder }: { products: Product[]; onS
   const [guestPhone, setGuestPhone] = useState('');
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const cartCount = Object.values(cart).reduce((total: number, quantity: number) => total + quantity, 0);
-  const cartTotal = Object.entries(cart).reduce((total: number, [productId, quantity]: [string, number]) => total + (products.find((product: Product) => product.id === productId)?.price ?? 0) * quantity, 0);
+  const cartTotal = Object.entries(cart).reduce((total: number, [key, quantity]: [string, number]) => total + (products.find((product: Product) => product.id === parseCartKey(key).productId)?.price ?? 0) * quantity, 0);
   const filteredProducts = useMemo(() => products.filter((product: Product) => (category === 'Todos' || product.category === category) && product.name.toLowerCase().includes(search.toLowerCase())), [category, products, search]);
   const updateCart = (productId: string, change: number): void => setCart((current: Record<string, number>) => { const nextQuantity = (current[productId] ?? 0) + change; if (nextQuantity <= 0) { const next = { ...current }; delete next[productId]; return next; } return { ...current, [productId]: nextQuantity }; });
   const placeGuestOrder = async (): Promise<void> => {
@@ -369,7 +386,7 @@ function GuestExperience({ products, onSubmitOrder }: { products: Product[]; onS
     }
     setMessage({ tone: 'error', text: result.message });
   };
-  return <main className="guest-shell"><header className="guest-header"><div className="brand-lockup"><span className="brand-mark">T</span><span>El Taita</span></div><span>Menú del restaurante</span></header><div className="guest-content"><div className="guest-intro"><p className="eyebrow">Cliente invitado</p><h1>Elige lo que quieres disfrutar</h1><p className="muted">No necesitas crear una cuenta. Solo te pediremos unos datos al confirmar.</p></div><MenuOrders products={products} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={null} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={placeGuestOrder} /></div><div className="guest-checkout"><label>Nombre<input value={guestName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestName(event.target.value)} placeholder="Tu nombre" /></label><label>Teléfono <span>(opcional)</span><input value={guestPhone} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestPhone(event.target.value)} placeholder="300 000 0000" /></label><p className="guest-payment-note">Confirmas tu pedido y pagas en caja con efectivo, tarjeta o Bre-B. La cocina lo prepara cuando el pago queda aprobado.</p>{message && <p className={`guest-message ${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.text}</p>}</div></main>;
+  return <main className="guest-shell"><header className="guest-header"><div className="brand-lockup"><span className="brand-mark">T</span><span>El Taita</span></div><span>Menú del restaurante</span></header><div className="guest-content"><div className="guest-intro"><p className="eyebrow">Cliente invitado</p><h1>Elige lo que quieres disfrutar</h1><p className="muted">No necesitas crear una cuenta. Solo te pediremos unos datos al confirmar.</p></div><MenuOrders products={products} options={productOptions} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={null} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={placeGuestOrder} /></div><div className="guest-checkout"><label>Nombre<input value={guestName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestName(event.target.value)} placeholder="Tu nombre" /></label><label>Teléfono <span>(opcional)</span><input value={guestPhone} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuestPhone(event.target.value)} placeholder="300 000 0000" /></label><p className="guest-payment-note">Confirmas tu pedido y pagas en caja con efectivo, tarjeta o Bre-B. La cocina lo prepara cuando el pago queda aprobado.</p>{message && <p className={`guest-message ${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.text}</p>}</div></main>;
 }
 
 function AuthScreen({ onGuestAccess, onForgotPassword }: { onGuestAccess: () => void; onForgotPassword: () => void }) {
