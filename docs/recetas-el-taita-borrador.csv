@@ -18,7 +18,7 @@ Hamburguesa La Jornalera;Lechuga;1;unidad;nevera
 Hamburguesa La Jornalera;Salsa de la casa;;ml;nevera
 Perro Caliente Normal;Pan artesanal perro;1;unidad;estanteria
 Perro Caliente Normal;Salchicha americana;1;unidad;nevera
-Perro Caliente Normal;Papa fosforito;30;g;estanteria
+Perro Caliente Normal;Papa fosforito;20;g;estanteria
 Perro Caliente Normal;Salsa de la casa;10;ml;nevera
 Perro Caliente Normal;Queso doble crema;1;unidad;nevera
 Perro Caliente Normal;Salsa rosada;10;ml;nevera
@@ -26,12 +26,45 @@ Perro Caliente Normal;Salsa mostaza;10;ml;nevera
 Perro Caliente Normal;Salsa roja;10;ml;nevera
 Perro Caliente Normal;Huevo de codorniz;1;unidad;nevera
 Perro con una carne;Pan artesanal perro;1;unidad;estanteria
-Perro Champiñones + Pollo;Pan artesanal perro;1;unidad;estanteria
-Perro Champiñones + Pollo;Pollo desmechado;;g;nevera
-Perro Champiñones + Pollo;Champiñones;;g;nevera
-Perro con dos carnes;Pan artesanal perro;1;unidad;estanteria
+Perro con una carne;Salchicha americana;1;unidad;nevera
+Perro con una carne;Papa fosforito;20;g;estanteria
+Perro con una carne;Salsa de la casa;10;ml;nevera
+Perro con una carne;Queso doble crema;1;unidad;nevera
+Perro con una carne;Salsa rosada;10;ml;nevera
+Perro con una carne;Salsa mostaza;10;ml;nevera
+Perro con una carne;Salsa roja;10;ml;nevera
+Perro con una carne;Huevo de codorniz;1;unidad;nevera
+Perro con una carne;Res mechada;60;g;nevera
 Perro con Res Mechada;Pan artesanal perro;1;unidad;estanteria
-Perro con Res Mechada;Res mechada;;g;nevera
+Perro con Res Mechada;Salchicha americana;1;unidad;nevera
+Perro con Res Mechada;Papa fosforito;20;g;estanteria
+Perro con Res Mechada;Salsa de la casa;10;ml;nevera
+Perro con Res Mechada;Queso doble crema;1;unidad;nevera
+Perro con Res Mechada;Salsa rosada;10;ml;nevera
+Perro con Res Mechada;Salsa mostaza;10;ml;nevera
+Perro con Res Mechada;Salsa roja;10;ml;nevera
+Perro con Res Mechada;Huevo de codorniz;1;unidad;nevera
+Perro con Res Mechada;Res mechada;60;g;nevera
+Perro Champiñones + Pollo;Pan artesanal perro;1;unidad;estanteria
+Perro Champiñones + Pollo;Salchicha americana;1;unidad;nevera
+Perro Champiñones + Pollo;Papa fosforito;20;g;estanteria
+Perro Champiñones + Pollo;Salsa de la casa;10;ml;nevera
+Perro Champiñones + Pollo;Queso doble crema;1;unidad;nevera
+Perro Champiñones + Pollo;Salsa rosada;10;ml;nevera
+Perro Champiñones + Pollo;Salsa mostaza;10;ml;nevera
+Perro Champiñones + Pollo;Salsa roja;10;ml;nevera
+Perro Champiñones + Pollo;Huevo de codorniz;1;unidad;nevera
+Perro Champiñones + Pollo;Pollo desmechado;30;g;nevera
+Perro Champiñones + Pollo;Champiñones;30;g;nevera
+Perro con dos carnes;Pan artesanal perro;1;unidad;estanteria
+Perro con dos carnes;Salchicha americana;1;unidad;nevera
+Perro con dos carnes;Papa fosforito;20;g;estanteria
+Perro con dos carnes;Salsa de la casa;10;ml;nevera
+Perro con dos carnes;Queso doble crema;1;unidad;nevera
+Perro con dos carnes;Salsa rosada;10;ml;nevera
+Perro con dos carnes;Salsa mostaza;10;ml;nevera
+Perro con dos carnes;Salsa roja;10;ml;nevera
+Perro con dos carnes;Huevo de codorniz;1;unidad;nevera
 Sándwich de Res Mechada;Pan artesanal sándwich;1;unidad;estanteria
 Sándwich de Res Mechada;Res mechada BBQ;120;g;nevera
 Sándwich de Res Mechada;Queso doble crema;1;unidad;nevera
