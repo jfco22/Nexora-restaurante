@@ -30,11 +30,19 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const parsedQuantity = Number(quantity);
+  // Acepta coma o punto como decimal (1,5 o 1.5)
+  const parsedQuantity = Number(quantity.trim().replace(',', '.'));
   const quantityValid = quantity.trim() !== '' && Number.isFinite(parsedQuantity) && parsedQuantity !== 0 && Math.abs(parsedQuantity) <= 1000000
     && (kind === 'adjustment' || parsedQuantity > 0);
-  const parsedCost = Number(unitCost);
-  const costValid = kind !== 'purchase' || (unitCost.trim() !== '' && Number.isInteger(parsedCost) && parsedCost >= 0);
+  // El costo se guarda en pesos enteros: si escriben decimales se redondea
+  const parsedCost = Math.round(Number(unitCost.trim().replace(',', '.')));
+  const costValid = kind !== 'purchase' || (unitCost.trim() !== '' && Number.isFinite(parsedCost) && parsedCost >= 0);
+  const problem = quantity.trim() === '' ? null
+    : !Number.isFinite(parsedQuantity) || parsedQuantity === 0 ? 'La cantidad no es válida.'
+    : kind !== 'adjustment' && parsedQuantity < 0 ? 'La cantidad debe ser mayor que cero (para restar usa Conteo/Ajuste).'
+    : Math.abs(parsedQuantity) > 1000000 ? 'La cantidad es demasiado grande.'
+    : !costValid ? 'Escribe el costo por unidad (un número, puede ser 0).'
+    : null;
   const canSubmit = quantityValid && costValid && !busy;
 
   const effect = quantityValid
@@ -93,12 +101,12 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
           <div className="inventory-form-row">
             <label>
               Cantidad ({item.unit})
-              <input type="number" inputMode="decimal" step="any" value={quantity} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuantity(event.target.value)} />
+              <input type="text" inputMode="decimal" value={quantity} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuantity(event.target.value)} />
             </label>
             {kind === 'purchase' && (
               <label>
                 Costo por {item.unit}
-                <input type="number" inputMode="numeric" min={0} step={1} value={unitCost} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUnitCost(event.target.value)} />
+                <input type="text" inputMode="decimal" value={unitCost} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUnitCost(event.target.value)} />
               </label>
             )}
           </div>
@@ -117,6 +125,7 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
           </div>
         </div>
 
+        {problem && <p className="auth-feedback error" role="alert">{problem}</p>}
         {error && <p className="auth-feedback error" role="alert">{error}</p>}
 
         <div className="inventory-form-footer">
