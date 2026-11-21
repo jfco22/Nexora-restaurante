@@ -2,18 +2,18 @@
 Hamburguesa Doña Carmen;Pan artesanal hamburguesa;1;unidad;estanteria
 Hamburguesa Doña Carmen;Carne carmelita;150;g;nevera
 Hamburguesa Doña Carmen;Queso doble crema;1;unidad;nevera
-Hamburguesa Doña Carmen;Tomate;0,25;unidad;estanteria
+Hamburguesa Doña Carmen;Tomate;25;g;estanteria
 Hamburguesa Doña Carmen;Lechuga;1;unidad;nevera
 Hamburguesa Doña Carmen;Salsa de la casa;;ml;nevera
 Hamburguesa Gallina mellicera;Pan artesanal hamburguesa;1;unidad;estanteria
 Hamburguesa Gallina mellicera;Carne de pollo molida;;g;nevera
 Hamburguesa Gallina mellicera;Queso doble crema;;unidad;nevera
-Hamburguesa Gallina mellicera;Tomate;;unidad;estanteria
+Hamburguesa Gallina mellicera;Tomate;;g;estanteria
 Hamburguesa Gallina mellicera;Lechuga;;unidad;nevera
 Hamburguesa La Jornalera;Pan artesanal hamburguesa;1;unidad;estanteria
 Hamburguesa La Jornalera;Carne de res molida;150;g;nevera
 Hamburguesa La Jornalera;Queso cheddar;1;unidad;nevera
-Hamburguesa La Jornalera;Tomate;0,25;unidad;estanteria
+Hamburguesa La Jornalera;Tomate;25;g;estanteria
 Hamburguesa La Jornalera;Lechuga;1;unidad;nevera
 Hamburguesa La Jornalera;Salsa de la casa;;ml;nevera
 Perro Caliente Normal;Pan artesanal perro;1;unidad;estanteria
@@ -67,13 +67,13 @@ Perro con dos carnes;Huevo de codorniz;1;unidad;nevera
 Sándwich de Res Mechada;Pan artesanal sándwich;1;unidad;estanteria
 Sándwich de Res Mechada;Res mechada BBQ;120;g;nevera
 Sándwich de Res Mechada;Queso doble crema;1;unidad;nevera
-Sándwich de Res Mechada;Tomate;0,375;unidad;estanteria
+Sándwich de Res Mechada;Tomate;37,5;g;estanteria
 Sándwich de Res Mechada;Lechuga;1;unidad;nevera
 Sándwich de Res Mechada;Salsa de la casa;;ml;nevera
 Sándwich de Chorizo con hogao;Pan artesanal sándwich;1;unidad;estanteria
 Sándwich de Chorizo con hogao;Hogao con chorizo;120;g;nevera
 Sándwich de Chorizo con hogao;Queso doble crema;1;unidad;nevera
-Sándwich de Chorizo con hogao;Tomate;0,375;unidad;estanteria
+Sándwich de Chorizo con hogao;Tomate;37,5;g;estanteria
 Sándwich de Chorizo con hogao;Lechuga;1;unidad;nevera
 Sándwich de Chorizo con hogao;Salsa de la casa;;ml;nevera
 Sándwich de Pollo con Champiñones;Pan artesanal sándwich;1;unidad;estanteria
@@ -82,11 +82,11 @@ Sándwich de Pollo con Champiñones;Champiñones;20;g;nevera
 Sándwich de Pollo con Champiñones;Salsa bechamel;;ml;nevera
 Sándwich de Pollo con Champiñones;Salsa de la casa;;ml;nevera
 Sándwich de Pollo con Champiñones;Queso doble crema;1;unidad;nevera
-Sándwich de Pollo con Champiñones;Tomate;0,375;unidad;estanteria
+Sándwich de Pollo con Champiñones;Tomate;37,5;g;estanteria
 Sándwich de Pollo con Champiñones;Lechuga;1;unidad;nevera
 Sándwich Vegano;Pan artesanal sándwich;1;unidad;estanteria
 Sándwich Vegano;Lechuga;;unidad;nevera
-Sándwich Vegano;Tomate;;unidad;estanteria
+Sándwich Vegano;Tomate;;g;estanteria
 Sándwich Vegano;Pepinillo;;g;estanteria
 Sándwich Vegano;Champiñones;;g;nevera
 Birriamen 140 gr;Fideos ramen;;g;estanteria
