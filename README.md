@@ -60,7 +60,7 @@ Después de publicar, en Supabase → *Authentication → URL Configuration*, po
 
 ## Menú de El Taita
 
-`docs/menu-el-taita.csv` y `docs/menu-el-taita.xlsx` traen la carta completa (55 productos). Para cargarla: entrar como propietario o gerente, abrir **Carta → Importar o gestionar menú** y subir el archivo. El importador actualiza por nombre, así que repetir la importación no duplica productos.
+`docs/menu-el-taita.csv` y `docs/menu-el-taita.xlsx` traen la carta completa (57 productos). Para cargarla: entrar como propietario o gerente, abrir **Carta → Importar o gestionar menú** y subir el archivo. El importador actualiza por nombre, así que repetir la importación no duplica productos.
 
 ## Fotos del menú
 
