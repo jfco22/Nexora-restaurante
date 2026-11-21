@@ -18,7 +18,7 @@ const tabs: { value: InventoryTab; label: string; icon: React.ReactNode }[] = [
   { value: 'shopping', label: 'Por comprar', icon: <ShoppingBasket size={16} /> },
 ];
 
-export function InventoryView({ onImport }: { onImport: () => void }) {
+export function InventoryView({ onImport, canManage }: { onImport: () => void; canManage: boolean }) {
   const [tab, setTab] = useState<InventoryTab>('stock');
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<InventoryItem[]>([]);
@@ -54,13 +54,13 @@ export function InventoryView({ onImport }: { onImport: () => void }) {
           </p>
         </div>
         <div className="page-heading-actions">
-          <button className="outline-button" type="button" onClick={() => setRecipeImportOpen(true)}><Soup size={16} /> Importar recetas</button>
+          {canManage && <button className="outline-button" type="button" onClick={() => setRecipeImportOpen(true)}><Soup size={16} /> Importar recetas</button>}
           <button className="primary-button" type="button" onClick={onImport}><Upload size={16} /> Importar Excel</button>
         </div>
       </div>
 
       <div className="inventory-tabs" role="tablist" aria-label="Secciones de inventario">
-        {tabs.map((option) => (
+        {tabs.filter((option) => canManage || (option.value !== 'recipes' && option.value !== 'cook')).map((option) => (
           <button
             key={option.value}
             type="button"
@@ -80,8 +80,8 @@ export function InventoryView({ onImport }: { onImport: () => void }) {
       {loaded && tab === 'stock' && (
         <InventoryStockTab items={items} archivedItems={archivedItems} usedToday={usedToday} onChanged={loadInventory} />
       )}
-      {loaded && tab === 'recipes' && <RecipesTab key={recipesVersion} items={items} />}
-      {loaded && tab === 'cook' && <PreparationsTab items={items} onChanged={loadInventory} />}
+      {loaded && canManage && tab === 'recipes' && <RecipesTab key={recipesVersion} items={items} />}
+      {loaded && canManage && tab === 'cook' && <PreparationsTab items={items} onChanged={loadInventory} />}
       {loaded && tab === 'shopping' && <ShoppingTab items={items} />}
       {recipeImportOpen && (
         <RecipeImportDialog

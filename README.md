@@ -83,3 +83,9 @@ en el menú QR, en la carta del personal y al agregar a una cuenta de mesa. Cada
 
 1. Aplicar la migración `20261120230000_add_nexora_product_option_choices.sql` en Supabase (SQL Editor).
 2. Tener cargados el menú y los insumos, y correr `docs/opciones-perros-el-taita.sql` (se puede repetir sin problema).
+
+## Quién ve las recetas y cocina
+
+Solo propietario y gerente ven las pestañas **Recetas** y **Cocinar**, importan recetas y registran tandas. Esto también
+se aplica en la base de datos (migración `20261121000000_restrict_recipes_and_cooking_to_managers.sql`), no solo en pantalla.
+El resto del personal sigue viendo Insumos y Por comprar y registrando compras, mermas y conteos.
