@@ -43,6 +43,7 @@ import { fetchOpenCashShift, formatOpenedAt, type CashShiftSummary } from '@/lib
 import { MANAGING_ROLES, roleLabels } from '@/lib/staffRoles';
 import { TeamView } from '@/components/equipo/TeamView';
 import { ForgotPasswordScreen } from '@/components/auth/ForgotPasswordScreen';
+import { useDashboardData, methodLabels } from '@/lib/dashboardData';
 import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
 import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions, type ProductOptionMap } from '@/lib/productOptions';
 
@@ -248,7 +249,7 @@ function App() {
         <nav className="main-nav" aria-label="Navegación principal">
           <p className="nav-label">Operación</p>
           <NavButton icon={<LayoutDashboard size={17} />} label="Inicio" active={view === 'inicio'} onClick={() => setView('inicio')} />
-          <NavButton icon={<ReceiptText size={17} />} label="Pedidos" badge="3" active={false} onClick={() => setView('carta')} />
+          <NavButton icon={<ReceiptText size={17} />} label="Pedidos" active={false} onClick={() => setView('carta')} />
           <NavButton icon={<Utensils size={17} />} label="Salón" active={view === 'salon'} onClick={() => setView('salon')} />
           <NavButton icon={<Banknote size={17} />} label="Caja" active={view === 'caja'} onClick={() => setView('caja')} />
           <NavButton icon={<Clock3 size={17} />} label="Cocina" badge={kitchenCount} active={view === 'cocina'} onClick={() => setView('cocina')} />
@@ -302,23 +303,35 @@ function NavButton({ icon, label, badge, active, onClick }: NavButtonProps) {
 
 type DashboardProps = { profile: UserProfile | null; onNavigate: (view: View) => void };
 
+const cop = (value: number): string => formatCurrency(value);
+
 function Dashboard({ profile, onNavigate }: DashboardProps) {
   const displayName = profile?.display_name ?? 'Usuario';
+  const { data, loaded, reload } = useDashboardData();
+  const today = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const maxDay = Math.max(1, ...(data?.days.map((day: { total: number }) => day.total) ?? [0]));
+  const points = (data?.days ?? []).map((day: { total: number }, index: number) => `${35 + index * 107.5},${200 - (day.total / maxDay) * 170}`);
+  const line = points.length > 0 ? `M${points.join(' L')}` : '';
+  const area = points.length > 0 ? `${line} L680,220 L35,220 Z` : '';
+  const methodTotal = (data?.byMethod ?? []).reduce((sum: number, row: { total: number }) => sum + row.total, 0);
+  const paymentColors = ['coral', 'dark', 'lime', 'slate', 'light'];
+  const ticket = data && data.paymentsToday > 0 ? Math.round(data.salesToday / data.paymentsToday) : 0;
   return (
     <div className="page-wrap">
-      <div className="page-heading"><div><p className="eyebrow">Jueves, 29 de octubre de 2026</p><h1>{greetingForHour()}, {displayName}</h1><p className="muted">Esto es lo que está pasando en tu restaurante hoy.</p></div><button className="outline-button" type="button" onClick={() => onNavigate('inicio')}><BarChart3 size={16} /> Ver reportes</button></div>
+      <div className="page-heading"><div><p className="eyebrow">{today}</p><h1>{greetingForHour()}, {displayName}</h1><p className="muted">Esto es lo que está pasando en tu restaurante hoy.</p></div><button className="outline-button" type="button" onClick={reload}><BarChart3 size={16} /> Actualizar</button></div>
+      {loaded && !data && <div className="data-notice" role="alert">No pudimos cargar las cifras del día. Revisa la conexión e inténtalo de nuevo.</div>}
       <section className="metric-grid">
-        <Metric label="Ventas hoy" value="$416.800" detail="7 pedidos · ticket $59.543" trend="+12,4%" />
-        <Metric label="Margen del día" value="54%" detail="$226.147 de utilidad" trend="Saludable" positive />
-        <Metric label="Pendiente por cobrar" value="$0" detail="Al día · nada sin cobrar" trend="Al día" positive />
-        <Metric label="Meta del día" value="$7.210.000" detail="Te faltan $8.362.314" trend="Recuperando" />
+        <Metric label="Ventas hoy" value={cop(data?.salesToday ?? 0)} detail={data && data.paymentsToday > 0 ? `${data.paymentsToday} pagos · ticket ${cop(ticket)}` : 'Aún no hay ventas hoy'} trend="Hoy" />
+        <Metric label="Ventas del mes" value={cop(data?.salesMonth ?? 0)} detail="Pagos recibidos este mes" trend="Mes" />
+        <Metric label="Pendiente por cobrar" value={cop(data?.pendingToCollect ?? 0)} detail={data && data.pendingToCollect > 0 ? 'Pedidos sin pagar' : 'Al día · nada sin cobrar'} trend={data && data.pendingToCollect > 0 ? 'Por cobrar' : 'Al día'} positive={!data || data.pendingToCollect === 0} />
+        <Metric label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} detail="En curso ahora mismo" trend="Ahora" />
       </section>
       <section className="dashboard-grid">
-        <div className="panel chart-panel"><div className="panel-heading"><div><h2>Ventas últimos 7 días</h2><p className="muted">Tendencia reciente del local</p></div><button className="text-button" type="button">Ver detalle <ArrowUpRight size={14} /></button></div><div className="chart"><div className="chart-y"><span>10,5 M</span><span>7,0 M</span><span>3,5 M</span><span>0</span></div><svg viewBox="0 0 700 220" role="img" aria-label="Tendencia de ventas de los últimos siete días"><defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#f0b4a5" stopOpacity=".45" /><stop offset="100%" stopColor="#fff" stopOpacity="0" /></linearGradient></defs><path d="M35 55 C120 35, 155 40, 210 88 S305 175, 380 142 S510 118, 570 133 S645 178, 680 188 L680 220 L35 220 Z" fill="url(#chart-fill)" /><path d="M35 55 C120 35, 155 40, 210 88 S305 175, 380 142 S510 118, 570 133 S645 178, 680 188" fill="none" stroke="#d9593b" strokeWidth="4" strokeLinecap="round" /><circle cx="680" cy="188" r="6" fill="#fff" stroke="#d9593b" strokeWidth="4" /></svg></div><div className="chart-days"><span>23 oct</span><span>24 oct</span><span>25 oct</span><span>26 oct</span><span>27 oct</span><span>28 oct</span><span>29 oct</span></div></div>
-        <div className="panel payments-panel"><div className="panel-heading"><div><h2>Cómo te pagaron hoy</h2><p className="muted">Por medio de pago</p></div><WalletCards size={17} color="#9ba8a1" /></div><PaymentRow label="Efectivo" value="$141.200" percentage="33%" color="coral" /><PaymentRow label="Transferencia" value="$87.600" percentage="21%" color="dark" /><PaymentRow label="Bre-B" value="$81.600" percentage="19%" color="lime" /><PaymentRow label="T. Crédito" value="$71.600" percentage="17%" color="slate" /><PaymentRow label="T. Débito" value="$39.800" percentage="9%" color="light" /></div>
+        <div className="panel chart-panel"><div className="panel-heading"><div><h2>Ventas últimos 7 días</h2><p className="muted">{data && data.days.some((day: { total: number }) => day.total > 0) ? 'Pagos recibidos por día' : 'Todavía no hay ventas en los últimos 7 días'}</p></div></div><div className="chart"><div className="chart-y"><span>{cop(maxDay)}</span><span>{cop(Math.round(maxDay * 2 / 3))}</span><span>{cop(Math.round(maxDay / 3))}</span><span>0</span></div><svg viewBox="0 0 700 220" role="img" aria-label="Ventas de los últimos siete días"><defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#f0b4a5" stopOpacity=".45" /><stop offset="100%" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>{area && <path d={area} fill="url(#chart-fill)" />}{line && <path d={line} fill="none" stroke="#d9593b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}</svg></div><div className="chart-days">{(data?.days ?? []).map((day: { label: string }) => <span key={day.label}>{day.label}</span>)}</div></div>
+        <div className="panel payments-panel"><div className="panel-heading"><div><h2>Cómo te pagaron hoy</h2><p className="muted">Por medio de pago</p></div><WalletCards size={17} color="#9ba8a1" /></div>{(data?.byMethod ?? []).length === 0 ? <p className="muted">Todavía no hay pagos hoy.</p> : (data?.byMethod ?? []).map((row: { method: string; total: number }, index: number) => <PaymentRow key={row.method} label={methodLabels[row.method] ?? row.method} value={cop(row.total)} percentage={`${Math.round((row.total / methodTotal) * 100)}%`} color={paymentColors[index % paymentColors.length]} />)}</div>
       </section>
-      <div className="section-title"><h2>Ahora mismo</h2><span>Actualizado hace 2 min</span></div>
-      <section className="quick-grid"><QuickCard icon={<ShoppingBag size={17} />} label="Pedidos abiertos" value="3" action="Ir a pedidos" onClick={() => onNavigate('carta')} /><QuickCard icon={<Utensils size={17} />} label="Mesas ocupadas" value="1 / 20" action="Ir a mesas" onClick={() => onNavigate('salon')} /><QuickCard icon={<Clock3 size={17} />} label="Tickets en cocina" value="1" action="Ver cocina" onClick={() => onNavigate('cocina')} /><QuickCard icon={<Boxes size={17} />} label="Insumos en alerta" value="13" action="Ver inventario" onClick={() => onNavigate('carta')} /></section>
+      <div className="section-title"><h2>Ahora mismo</h2><span>{loaded ? 'Actualizado al abrir esta pantalla' : 'Cargando…'}</span></div>
+      <section className="quick-grid"><QuickCard icon={<ShoppingBag size={17} />} label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} action="Ir a pedidos" onClick={() => onNavigate('carta')} /><QuickCard icon={<Utensils size={17} />} label="Mesas ocupadas" value={`${data?.occupiedTables ?? 0} / ${data?.totalTables ?? 0}`} action="Ir a mesas" onClick={() => onNavigate('salon')} /><QuickCard icon={<Clock3 size={17} />} label="Tickets en cocina" value={String(data?.openOrders ?? 0)} action="Ver cocina" onClick={() => onNavigate('cocina')} /><QuickCard icon={<Boxes size={17} />} label="Insumos en alerta" value={String(data?.lowStock ?? 0)} action="Ver inventario" onClick={() => onNavigate('inventario')} /></section>
     </div>
   );
 }
