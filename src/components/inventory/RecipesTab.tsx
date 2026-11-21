@@ -1,3 +1,4 @@
+import { InventorySearch, matchesSearch } from '@/components/inventory/InventorySearch';
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { fetchCatalogForRecipes, type CatalogProduct, type InventoryItem, type RecipeLine } from '@/lib/inventory';
@@ -10,6 +11,7 @@ export function RecipesTab({ items }: RecipesTabProps) {
   const [recipeLines, setRecipeLines] = useState<RecipeLine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [query, setQuery] = useState('');
   const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
 
   const loadCatalog = useCallback(async (): Promise<void> => {
@@ -24,7 +26,8 @@ export function RecipesTab({ items }: RecipesTabProps) {
     void loadCatalog();
   }, [loadCatalog]);
 
-  const categories = Array.from(new Set(products.map((product: CatalogProduct) => product.category)));
+  const visibleProducts = products.filter((product: CatalogProduct) => matchesSearch(product.name, query));
+  const categories = Array.from(new Set(visibleProducts.map((product: CatalogProduct) => product.category)));
   const withoutRecipe = products.filter((product: CatalogProduct) => !recipeLines.some((line: RecipeLine) => line.product_id === product.id)).length;
 
   return (
@@ -33,13 +36,14 @@ export function RecipesTab({ items }: RecipesTabProps) {
         Cada plato descuenta sus insumos al enviarse a cocina. {withoutRecipe > 0 ? `${withoutRecipe} platos todavía no tienen receta.` : 'Todos los platos tienen receta.'}
       </p>
 
+      <div className="inventory-toolbar"><InventorySearch value={query} onChange={setQuery} placeholder="Buscar plato…" /></div>
       {error && <p className="auth-feedback error" role="alert">{error}</p>}
 
       {loaded && categories.map((category: string) => (
         <div className="inventory-group" key={category}>
           <h2>{category}</h2>
           <ul className="recipe-list">
-            {products.filter((product: CatalogProduct) => product.category === category).map((product: CatalogProduct) => {
+            {visibleProducts.filter((product: CatalogProduct) => product.category === category).map((product: CatalogProduct) => {
               const lines = recipeLines.filter((line: RecipeLine) => line.product_id === product.id);
               return (
                 <li key={product.id}>

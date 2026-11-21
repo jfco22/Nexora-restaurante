@@ -10,6 +10,7 @@ import {
 } from '@/lib/inventory';
 import { ItemDialog } from '@/components/inventory/ItemDialog';
 import { MovementDialog } from '@/components/inventory/MovementDialog';
+import { InventorySearch, matchesSearch } from '@/components/inventory/InventorySearch';
 
 const storageOrder: StorageLocation[] = ['nevera', 'estanteria', 'bodega'];
 
@@ -30,10 +31,14 @@ type InventoryStockTabProps = {
 export function InventoryStockTab({ items, archivedItems, usedToday, onChanged }: InventoryStockTabProps) {
   const [itemDialog, setItemDialog] = useState<InventoryItem | 'new' | null>(null);
   const [movementItem, setMovementItem] = useState<InventoryItem | null>(null);
+  const [query, setQuery] = useState('');
+  const visibleItems = items.filter((item: InventoryItem) => matchesSearch(item.name, query));
+  const visibleArchived = archivedItems.filter((item: InventoryItem) => matchesSearch(item.name, query));
 
   return (
     <section className="inventory-section">
       <div className="inventory-toolbar">
+        <InventorySearch value={query} onChange={setQuery} placeholder="Buscar insumo…" />
         <button className="primary-button" type="button" onClick={() => setItemDialog('new')}>
           <Plus size={16} /> Nuevo insumo
         </button>
@@ -43,8 +48,12 @@ export function InventoryStockTab({ items, archivedItems, usedToday, onChanged }
         <p className="inventory-empty">Aún no tienes insumos. Agrega los que usas en la cocina para empezar a controlar el stock.</p>
       )}
 
+      {query.trim() !== '' && visibleItems.length === 0 && visibleArchived.length === 0 && (
+        <p className="inventory-empty">No hay insumos que coincidan con "{query}".</p>
+      )}
+
       {storageOrder.map((location: StorageLocation) => {
-        const group = items.filter((item: InventoryItem) => item.storage_location === location);
+        const group = visibleItems.filter((item: InventoryItem) => item.storage_location === location);
         if (group.length === 0) return null;
         return (
           <div className="inventory-group" key={location}>
@@ -80,11 +89,11 @@ export function InventoryStockTab({ items, archivedItems, usedToday, onChanged }
         );
       })}
 
-      {archivedItems.length > 0 && (
+      {visibleArchived.length > 0 && (
         <div className="inventory-group archived">
-          <h2>Desactivados <span>{archivedItems.length}</span></h2>
+          <h2>Desactivados <span>{visibleArchived.length}</span></h2>
           <ul className="inventory-list">
-            {archivedItems.map((item: InventoryItem) => (
+            {visibleArchived.map((item: InventoryItem) => (
               <li className="inventory-row" key={item.id}>
                 <div className="inventory-name">
                   <strong>{item.name}</strong>
