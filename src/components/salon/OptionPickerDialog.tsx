@@ -38,6 +38,7 @@ export function OptionPickerDialog({ productName, option, onConfirm, onClose }: 
           ))}
         </div>
         <footer className="account-footer">
+          {!complete && <small className="form-problem-inline">Falta escoger: {selected.map((value: string | null, slot: number) => (value === null ? `carne ${slot + 1}` : null)).filter(Boolean).join(' y ')}.</small>}
           <button className="primary-button full-width" type="button" disabled={!complete} onClick={() => onConfirm(selected as string[])}>Agregar al pedido</button>
         </footer>
       </div>

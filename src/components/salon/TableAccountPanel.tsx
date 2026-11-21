@@ -180,6 +180,7 @@ export function TableAccountPanel({ tableId, tableName, onClose, onChanged }: Ta
               <>
                 <button className="outline-button" type="button" disabled={busy} onClick={() => setPickerOpen(true)}><Plus size={15} /> Agregar productos</button>
                 <button className="primary-button" type="button" disabled={busy || account.lines.length === 0} onClick={sendToKitchen}>Enviar a cocina</button>
+                {account.lines.length === 0 && <small className="form-problem-inline">Agrega al menos un producto con "Agregar productos" para poder enviar a cocina.</small>}
                 {account.payments.length === 0 && (
                   <button className="account-danger-button" type="button" disabled={busy} onClick={() => void cancelAccount()}><Trash2 size={14} /> Cancelar cuenta</button>
                 )}
@@ -241,6 +242,7 @@ function AccountPaymentRow({ payment, disabled, onConfirm }: AccountPaymentRowPr
             aria-label="Referencia del banco para confirmar el pago Bre-B"
           />
           <button className="outline-button" type="submit" disabled={disabled || !reference.trim()}>Confirmar</button>
+          {!reference.trim() && <small className="form-problem-inline">Escribe la referencia exacta del banco para confirmar el pago.</small>}
           {error && <p className="auth-feedback error" role="alert">{error}</p>}
         </form>
       ) : (

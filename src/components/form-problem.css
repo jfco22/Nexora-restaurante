@@ -1,0 +1,3 @@
+.form-problem { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 9px 12px; border: 1px solid #f0d9a8; border-radius: 9px; color: #7a5a14; background: #fff8e6; font-size: .76rem; line-height: 1.45; }
+.form-problem-inline { display: block; margin-bottom: 8px; color: #7a5a14; font-size: .74rem; line-height: 1.4; }
+.form-problem svg { flex: none; margin-top: 2px; }

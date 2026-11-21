@@ -89,3 +89,12 @@ en el menú QR, en la carta del personal y al agregar a una cuenta de mesa. Cada
 Solo propietario y gerente ven las pestañas **Recetas** y **Cocinar**, importan recetas y registran tandas. Esto también
 se aplica en la base de datos (migración `20261121000000_restrict_recipes_and_cooking_to_managers.sql`), no solo en pantalla.
 El resto del personal sigue viendo Insumos y Por comprar y registrando compras, mermas y conteos.
+
+## Regla de formularios: nunca un botón apagado sin explicación
+
+Cada formulario que desactiva su botón por una validación debe mostrar **por qué** y **cómo corregirlo**:
+- `src/lib/formProblems.ts`: funciones de validación que devuelven el mensaje (o `null` si está bien).
+- `src/components/FormProblem.tsx`: cuadro amarillo con el mensaje. Para botones de acción simples se usa la nota corta `form-problem-inline`.
+- Los errores que vienen de Supabase pasan por `userFacingError` (`src/lib/tableAccount.ts`), que traduce los códigos
+  (permiso, duplicado, en uso, fuera de rango, falta una migración, sesión vencida, sin conexión) y muestra el código técnico
+  cuando no lo reconoce. Los mensajes `RAISE EXCEPTION` de las funciones SQL (código P0001) se muestran tal cual.

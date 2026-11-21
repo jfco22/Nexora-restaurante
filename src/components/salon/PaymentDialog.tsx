@@ -1,3 +1,5 @@
+import { FormProblem } from '@/components/FormProblem';
+import { wholeAmountProblem } from '@/lib/formProblems';
 import { useState } from 'react';
 import { CircleDollarSign, CreditCard, Smartphone, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
@@ -26,6 +28,9 @@ export function PaymentDialog({ balance, onRegister, onClose }: PaymentDialogPro
   const amountValid = Number.isInteger(parsedAmount) && parsedAmount > 0 && parsedAmount <= balance;
   const referenceValid = method !== 'bre_b' || reference.trim().length > 0;
   const canSubmit = amountValid && referenceValid && !busy;
+  const problem = wholeAmountProblem(amount, 'el valor que paga el cliente', { min: 1, example: '25000' })
+    ?? (parsedAmount > balance ? `El valor supera lo que falta por cobrar (${formatCurrency(balance)}). Escribe ${formatCurrency(balance)} o menos.` : null)
+    ?? (!referenceValid ? 'Escribe la referencia que aparece en el comprobante de la transferencia Bre-B; sin ella no se puede registrar el pago.' : null);
   const selectedHint = methodOptions.find((option) => option.value === method)?.hint ?? '';
 
   const submit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -83,6 +88,7 @@ export function PaymentDialog({ balance, onRegister, onClose }: PaymentDialogPro
           </label>
         )}
 
+        <FormProblem message={problem} />
         {error && <p className="auth-feedback error" role="alert">{error}</p>}
 
         <button className="primary-button full-width" type="submit" disabled={!canSubmit}>

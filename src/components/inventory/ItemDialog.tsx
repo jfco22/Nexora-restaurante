@@ -1,3 +1,4 @@
+import { FormProblem } from '@/components/FormProblem';
 import { useState } from 'react';
 import { Archive, ArchiveRestore, X } from 'lucide-react';
 import '@/components/salon/account.css';
@@ -32,6 +33,9 @@ export function ItemDialog({ item, onSaved, onClose }: ItemDialogProps) {
   const nameValid = name.trim().length >= 1 && name.trim().length <= 80;
   const minValid = minStock.trim() !== '' && Number.isFinite(parsedMin) && parsedMin >= 0 && parsedMin <= 1000000;
   const canSubmit = nameValid && minValid && !busy;
+  const problem = !nameValid ? (name.trim() === '' ? 'Escribe el nombre del insumo (ej. Queso mozzarella).' : 'El nombre es demasiado largo (máximo 80 letras).')
+    : !minValid ? (minStock.trim() === '' ? 'Escribe el stock mínimo para alertar (usa 0 si no quieres alerta).' : 'El stock mínimo debe ser un número igual o mayor que 0.')
+    : null;
 
   const toggleActive = async (): Promise<void> => {
     if (!item) return;
@@ -103,6 +107,7 @@ export function ItemDialog({ item, onSaved, onClose }: ItemDialogProps) {
           </label>
         </div>
 
+        <FormProblem message={problem} />
         {error && <p className="auth-feedback error" role="alert">{error}</p>}
 
         <div className="inventory-form-footer">

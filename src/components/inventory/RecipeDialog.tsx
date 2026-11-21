@@ -1,3 +1,4 @@
+import { FormProblem } from '@/components/FormProblem';
 import { useState } from 'react';
 import { Trash2, X } from 'lucide-react';
 import '@/components/salon/account.css';
@@ -28,6 +29,7 @@ export function RecipeDialog({ product, items, lines, onChanged, onClose }: Reci
   const parsedQuantity = Number(quantity);
   const quantityValid = quantity.trim() !== '' && Number.isFinite(parsedQuantity) && parsedQuantity > 0 && parsedQuantity <= 1000000;
   const canAdd = Boolean(selectedItem) && quantityValid && !busy;
+  const problem = !selectedItem ? 'Escoge primero el insumo de la lista de arriba.' : quantity.trim() === '' ? 'Escribe cuánto de ese insumo lleva un plato (ej. 150 si el insumo está en gramos).' : !quantityValid ? 'La cantidad debe ser un número mayor que 0.' : null;
 
   const addLine = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -106,6 +108,7 @@ export function RecipeDialog({ product, items, lines, onChanged, onClose }: Reci
                   <input type="number" inputMode="decimal" min={0} step="any" value={quantity} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuantity(event.target.value)} />
                 </label>
               </div>
+              <FormProblem message={problem} />
               <button className="outline-button full-width" type="submit" disabled={!canAdd}>
                 {busy ? 'Guardando...' : 'Guardar en la receta'}
               </button>

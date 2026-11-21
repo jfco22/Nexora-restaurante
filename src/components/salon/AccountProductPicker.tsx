@@ -167,6 +167,7 @@ export function AccountProductPicker({ onAddItems, onClose }: AccountProductPick
         {picking && options[picking.id] && <OptionPickerDialog productName={picking.name} option={options[picking.id]} onClose={() => setPicking(null)} onConfirm={(choiceIds: string[]) => { updateCart(cartKey(picking.id, choiceIds), 1); setPicking(null); }} />}
         <footer className="account-footer picker-footer">
           {submitError && <p className="auth-feedback error" role="alert">{submitError}</p>}
+          {cartCount === 0 && <small className="form-problem-inline">Pulsa Agregar en los productos que quieres añadir a la cuenta.</small>}
           <button className="primary-button full-width" type="button" disabled={busy || cartCount === 0} onClick={() => void submit()}>
             {busy ? 'Agregando...' : `Agregar a la cuenta (${cartCount})`}
           </button>

@@ -1,3 +1,4 @@
+import { FormProblem } from '@/components/FormProblem';
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -25,8 +26,14 @@ export function CreateStaffDialog({ callerRole, onClose, onCreated }: CreateStaf
 
   const roleOptions = Object.entries(roleLabels).filter(([value]: [string, string]) => value !== 'owner' || callerRole === 'owner');
 
+  const problem = displayName.trim() === '' ? 'Escribe el nombre de la persona.'
+    : !/^\S+@\S+\.\S+$/.test(email.trim()) ? 'Escribe un correo válido, por ejemplo nombre@restaurante.com.'
+    : password.length < 6 ? 'La contraseña inicial debe tener mínimo 6 caracteres; usa letras y números para que sea segura.'
+    : null;
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
+    if (problem) return;
     setBusy(true);
     setError(null);
 
@@ -50,9 +57,9 @@ export function CreateStaffDialog({ callerRole, onClose, onCreated }: CreateStaf
         if (serverMessage) {
           setError(serverMessage);
         } else if (response.status === 404) {
-          setError('La función create-staff-user no está desplegada en Supabase. Despliégala desde Bolt e inténtalo de nuevo.');
+          setError('La función create-staff-user no está publicada en Supabase. Publícala en Supabase (Edge Functions → create-staff-user, o con el comando supabase functions deploy create-staff-user) e inténtalo de nuevo.');
         } else {
-          setError(`El servidor respondió con un error (código ${response.status}). Inténtalo de nuevo.`);
+          setError(response.status === 401 ? 'Tu sesión venció. Cierra sesión, vuelve a entrar e inténtalo de nuevo.' : response.status === 403 ? 'Solo un propietario o gerente puede crear usuarios.' : `El servidor respondió con un error (código ${response.status}). Revisa que la función create-staff-user esté publicada y sus variables configuradas en Supabase.`);
         }
         return;
       }
@@ -74,15 +81,16 @@ export function CreateStaffDialog({ callerRole, onClose, onCreated }: CreateStaf
           </div>
           <button className="icon-button" type="button" aria-label="Cerrar" onClick={onClose} disabled={busy}><X size={17} /></button>
         </div>
-        <form className="team-form" onSubmit={(event: React.FormEvent<HTMLFormElement>) => void handleSubmit(event)}>
+        <form className="team-form" noValidate onSubmit={(event: React.FormEvent<HTMLFormElement>) => void handleSubmit(event)}>
           <label>Nombre<input value={displayName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value)} placeholder="Nombre de la persona" required maxLength={80} /></label>
           <label>Correo electrónico<input type="email" value={email} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)} placeholder="correo@restaurante.com" required /></label>
           <label>Contraseña inicial<input type="password" minLength={6} maxLength={72} value={password} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)} placeholder="Mínimo 6 caracteres" required /></label>
           <label>Rol<select value={role} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setRole(event.target.value)}>{roleOptions.map(([value, label]: [string, string]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <FormProblem message={problem} />
           {error && <p className="auth-feedback error" role="alert">{error}</p>}
           <div className="team-dialog-actions">
             <button className="outline-button" type="button" onClick={onClose} disabled={busy}>Cancelar</button>
-            <button className="primary-button" type="submit" disabled={busy}>{busy ? 'Creando...' : 'Crear usuario'}</button>
+            <button className="primary-button" type="submit" disabled={busy || problem !== null}>{busy ? 'Creando...' : 'Crear usuario'}</button>
           </div>
         </form>
       </section>

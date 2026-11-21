@@ -73,5 +73,26 @@ export async function fetchOpenTableAccount(tableId: string): Promise<{ account:
   };
 }
 
-export const userFacingError = (error: { code: string; message: string }): string =>
-  error.code === 'P0001' ? error.message : 'No pudimos completar la acción. Revisa la cuenta e inténtalo de nuevo.';
+/**
+ * Traduce un error de Supabase a un mensaje que dice qué pasó y cómo corregirlo.
+ * P0001 son mensajes que escribimos nosotros en las funciones SQL y se muestran tal cual.
+ */
+export const userFacingError = (error: { code?: string; message?: string }): string => {
+  const code = error.code ?? '';
+  const message = error.message ?? '';
+  if (code === 'P0001') return message;
+  console.error('Error de Supabase', { code, message });
+  if (code === '42501' || /row-level security|permission denied/i.test(message)) {
+    return 'Tu rol no tiene permiso para hacer esto. Pídele a un propietario o gerente que lo haga o que te cambie el rol en Equipo.';
+  }
+  if (code === '23505') return 'Ya existe un registro con ese nombre. Búscalo en la lista (puede estar en "Desactivados") y reactívalo, o usa otro nombre.';
+  if (code === '23503') return 'Este registro está en uso (recetas, pedidos o historial) y no se puede borrar o cambiar así. Desactívalo en vez de borrarlo.';
+  if (code === '23514' || code === '22003') return 'Un número está fuera del rango permitido (negativo, demasiado grande o con demasiados decimales). Revisa las cantidades y los precios.';
+  if (code === '22P02') return 'Uno de los valores no tiene el formato correcto (por ejemplo, texto en un campo de números). Revisa lo que escribiste.';
+  if (code === '42883' || code === 'PGRST202' || code === '42P01' || code === 'PGRST205' || code === '42703' || /does not exist|could not find the function/i.test(message)) {
+    return 'Falta aplicar una actualización de la base de datos (migración SQL) en Supabase. No es un error tuyo: avisa a quien administra el sistema y dile el código ' + (code || 'sin código') + '.';
+  }
+  if (code === 'PGRST301' || /jwt/i.test(message)) return 'Tu sesión venció. Cierra sesión y vuelve a entrar.';
+  if (/failed to fetch|networkerror|load failed/i.test(message)) return 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.';
+  return `No pudimos completar la acción${code ? ` (código ${code})` : ''}. Revisa los datos e inténtalo de nuevo; si sigue igual, avisa al administrador con ese código.`;
+};

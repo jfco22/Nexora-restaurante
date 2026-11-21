@@ -1,3 +1,5 @@
+import { FormProblem } from '@/components/FormProblem';
+import { wholeAmountProblem } from '@/lib/formProblems';
 import { useState } from 'react';
 import { CircleDollarSign, CreditCard, Lock, LockOpen, Smartphone, Wallet, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
@@ -52,6 +54,7 @@ function OpenShiftForm({ onChanged }: OpenShiftFormProps) {
   const [opening, setOpening] = useState('0');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const openingProblem = wholeAmountProblem(opening, 'el efectivo con el que abres la caja', { example: '50000' });
   const canSubmit = isWholeAmount(opening, 0) && !busy;
 
   const submit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -75,6 +78,7 @@ function OpenShiftForm({ onChanged }: OpenShiftFormProps) {
         Fondo inicial en caja
         <input type="number" inputMode="numeric" min={0} step={1} value={opening} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setOpening(event.target.value)} />
       </label>
+      <FormProblem message={openingProblem} />
       {error && <p className="auth-feedback error" role="alert">{error}</p>}
       <button className="primary-button full-width" type="submit" disabled={!canSubmit}>
         <LockOpen size={16} /> {busy ? 'Abriendo...' : 'Abrir caja'}
@@ -93,6 +97,7 @@ function OpenShiftView({ shift, onClosed, onChanged }: OpenShiftViewProps) {
   const [counted, setCounted] = useState(String(shift.expected_cash_cop));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const countedProblem = wholeAmountProblem(counted, 'el efectivo que contaste en la caja', { example: '183500' });
   const canSubmit = isWholeAmount(counted, 0) && !busy;
   const countedValue = Number(counted);
   const liveDifference = isWholeAmount(counted, 0) ? countedValue - shift.expected_cash_cop : null;
@@ -140,6 +145,7 @@ function OpenShiftView({ shift, onClosed, onChanged }: OpenShiftViewProps) {
         </p>
       )}
 
+      <FormProblem message={countedProblem} />
       {error && <p className="auth-feedback error" role="alert">{error}</p>}
       <button className="primary-button full-width" type="submit" disabled={!canSubmit}>
         <Lock size={16} /> {busy ? 'Cerrando...' : 'Cerrar caja'}
