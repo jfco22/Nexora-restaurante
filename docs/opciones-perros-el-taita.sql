@@ -15,7 +15,7 @@ BEGIN
   FOR r IN SELECT * FROM (VALUES
     ('Res mechada',          'Res mechada',      60::numeric),
     ('Carne con guiso',      'Res mechada',      60),
-    ('Carne con guiso',      'Tomate',           0.5),
+    ('Carne con guiso',      'Tomate',           50),
     ('Carne con guiso',      'Cebolla blanca',   0.25),
     ('Pollo con champiñones','Pollo desmechado', 30),
     ('Pollo con champiñones','Champiñones',      30),
@@ -46,7 +46,7 @@ BEGIN
   FOR r IN SELECT * FROM (VALUES
     ('Res mechada',          'Res mechada',      60::numeric),
     ('Carne con guiso',      'Res mechada',      60),
-    ('Carne con guiso',      'Tomate',           0.5),
+    ('Carne con guiso',      'Tomate',           50),
     ('Carne con guiso',      'Cebolla blanca',   0.25),
     ('Pollo con champiñones','Pollo desmechado', 30),
     ('Pollo con champiñones','Champiñones',      30),
