@@ -32,7 +32,7 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
 
   const loadReference = useCallback(async (): Promise<void> => {
     const [inventory, preps] = await Promise.all([fetchInventory(), fetchPreparations()]);
-    setItems(inventory.items);
+    setItems([...inventory.items, ...inventory.archivedItems]);
     setExisting(preps.preparations);
     setLoadError(inventory.error ?? preps.error);
   }, []);

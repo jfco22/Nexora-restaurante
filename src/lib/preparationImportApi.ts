@@ -3,6 +3,13 @@ import { userFacingError } from '@/lib/tableAccount';
 import { normalizeName, type PlanLine } from '@/lib/recipeImport';
 import type { PlannedExtraOutput, PlannedPreparation, PreparationPlan } from '@/lib/preparationImport';
 
+/** Reactiva los insumos archivados que el archivo vuelve a usar (en vez de crear un duplicado con el mismo nombre). */
+async function reactivateItems(ids: (string | null)[]): Promise<void> {
+  const unique = [...new Set(ids.filter((id: string | null): id is string => Boolean(id)))];
+  if (unique.length === 0) return;
+  await supabase.from('nexora_inventory_items').update({ is_active: true }).in('id', unique).eq('is_active', false);
+}
+
 export type PreparationImportOutcome = {
   ok: boolean;
   message: string | null;
@@ -26,6 +33,11 @@ export async function applyPreparationPlan(plan: PreparationPlan): Promise<Prepa
     ...plan.preparations.flatMap((prep: PlannedPreparation) => prep.extraOutputs.filter((extra: PlannedExtraOutput) => extra.newItem).map((extra: PlannedExtraOutput) => extra.newItem as NonNullable<PlannedExtraOutput['newItem']>)),
   ];
   const toCreate = candidates.filter((item, index: number) => candidates.findIndex((other) => normalizeName(other.name) === normalizeName(item.name)) === index);
+  await reactivateItems([
+    ...plan.preparations.map((prep: PlannedPreparation) => prep.outputItemId),
+    ...plan.preparations.flatMap((prep: PlannedPreparation) => (prep.lines as PlanLine[]).map((line: PlanLine) => line.itemId)),
+    ...plan.preparations.flatMap((prep: PlannedPreparation) => prep.extraOutputs.map((extra: PlannedExtraOutput) => extra.itemId)),
+  ]);
   const itemIds = new Map<string, string>();
   if (toCreate.length > 0) {
     const { data, error } = await supabase

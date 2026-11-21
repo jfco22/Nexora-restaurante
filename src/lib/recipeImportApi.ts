@@ -3,6 +3,13 @@ import { userFacingError } from '@/lib/tableAccount';
 import type { RecipeLine } from '@/lib/inventory';
 import { normalizeName, type PlanLine, type RecipePlan } from '@/lib/recipeImport';
 
+/** Reactiva los insumos archivados que el archivo vuelve a usar (en vez de crear un duplicado con el mismo nombre). */
+async function reactivateItems(ids: (string | null)[]): Promise<void> {
+  const unique = [...new Set(ids.filter((id: string | null): id is string => Boolean(id)))];
+  if (unique.length === 0) return;
+  await supabase.from('nexora_inventory_items').update({ is_active: true }).in('id', unique).eq('is_active', false);
+}
+
 export type RecipeImportOutcome = {
   ok: boolean;
   message: string | null;
@@ -23,6 +30,8 @@ export async function applyRecipePlan(plan: RecipePlan, existingLines: RecipeLin
   });
   const valid = plan.lines.filter((line: PlanLine) => line.errors.length === 0 && line.productId !== null && line.quantity !== null);
   if (valid.length === 0) return failed('No hay filas válidas para importar.');
+
+  await reactivateItems(valid.map((line: PlanLine) => line.itemId));
 
   const newItemIds = new Map<string, string>();
   if (plan.newItems.length > 0) {

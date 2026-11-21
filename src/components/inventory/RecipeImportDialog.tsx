@@ -34,7 +34,7 @@ export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogPr
     const [catalog, inventory] = await Promise.all([fetchCatalogForRecipes(), fetchInventory()]);
     setProducts(catalog.products);
     setExistingLines(catalog.recipeLines);
-    setItems(inventory.items);
+    setItems([...inventory.items, ...inventory.archivedItems]);
     setLoadError(catalog.error ?? inventory.error);
   }, []);
 
