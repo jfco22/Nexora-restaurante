@@ -8,7 +8,6 @@ import {
   BookOpen,
   Boxes,
   ChevronDown,
-  CircleDollarSign,
   Clock3,
   Coffee,
   LayoutDashboard,
@@ -276,7 +275,7 @@ function App() {
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark">N</span>Nexora</div>
           <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : 'Carta y pedidos'}</strong></div>
-          <div className="topbar-actions"><span className="credit-pill"><CircleDollarSign size={15} /> $270</span><button className="icon-button" type="button" aria-label="Notificaciones"><Bell size={18} /><span className="notification-dot" /></button><span className="language">ES</span><span className="avatar">{(profile?.display_name?.slice(0, 2) ?? 'MA').toUpperCase()}</span></div>
+          <div className="topbar-actions"><button className="icon-button" type="button" aria-label="Notificaciones"><Bell size={18} /></button><span className="language">ES</span><span className="avatar">{(profile?.display_name?.slice(0, 2) ?? 'MA').toUpperCase()}</span></div>
         </header>
 
         {view === 'inicio' && <Dashboard profile={profile} onNavigate={(nextView: View) => setView(nextView)} />}
@@ -327,7 +326,7 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
         <Metric label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} detail="En curso ahora mismo" trend="Ahora" />
       </section>
       <section className="dashboard-grid">
-        <div className="panel chart-panel"><div className="panel-heading"><div><h2>Ventas últimos 7 días</h2><p className="muted">{data && data.days.some((day: { total: number }) => day.total > 0) ? 'Pagos recibidos por día' : 'Todavía no hay ventas en los últimos 7 días'}</p></div></div><div className="chart"><div className="chart-y"><span>{cop(maxDay)}</span><span>{cop(Math.round(maxDay * 2 / 3))}</span><span>{cop(Math.round(maxDay / 3))}</span><span>0</span></div><svg viewBox="0 0 700 220" role="img" aria-label="Ventas de los últimos siete días"><defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#f0b4a5" stopOpacity=".45" /><stop offset="100%" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>{area && <path d={area} fill="url(#chart-fill)" />}{line && <path d={line} fill="none" stroke="#d9593b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}</svg></div><div className="chart-days">{(data?.days ?? []).map((day: { label: string }) => <span key={day.label}>{day.label}</span>)}</div></div>
+        <div className="panel chart-panel"><div className="panel-heading"><div><h2>Ventas últimos 7 días</h2><p className="muted">{data && data.days.some((day: { total: number }) => day.total > 0) ? 'Pagos recibidos por día' : 'Todavía no hay ventas en los últimos 7 días'}</p></div></div><div className="chart"><div className="chart-y">{data && data.days.some((day: { total: number }) => day.total > 0) ? <><span>{cop(maxDay)}</span><span>{cop(Math.round(maxDay * 2 / 3))}</span><span>{cop(Math.round(maxDay / 3))}</span><span>0</span></> : <><span /><span /><span /><span>0</span></>}</div><svg viewBox="0 0 700 220" role="img" aria-label="Ventas de los últimos siete días"><defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#f0b4a5" stopOpacity=".45" /><stop offset="100%" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>{area && <path d={area} fill="url(#chart-fill)" />}{line && <path d={line} fill="none" stroke="#d9593b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}</svg></div><div className="chart-days">{(data?.days ?? []).map((day: { label: string }) => <span key={day.label}>{day.label}</span>)}</div></div>
         <div className="panel payments-panel"><div className="panel-heading"><div><h2>Cómo te pagaron hoy</h2><p className="muted">Por medio de pago</p></div><WalletCards size={17} color="#9ba8a1" /></div>{(data?.byMethod ?? []).length === 0 ? <p className="muted">Todavía no hay pagos hoy.</p> : (data?.byMethod ?? []).map((row: { method: string; total: number }, index: number) => <PaymentRow key={row.method} label={methodLabels[row.method] ?? row.method} value={cop(row.total)} percentage={`${Math.round((row.total / methodTotal) * 100)}%`} color={paymentColors[index % paymentColors.length]} />)}</div>
       </section>
       <div className="section-title"><h2>Ahora mismo</h2><span>{loaded ? 'Actualizado al abrir esta pantalla' : 'Cargando…'}</span></div>
