@@ -80,3 +80,7 @@
 .cook-lines li { display: flex; justify-content: space-between; gap: 12px; color: #3b463f; }
 .cook-lines li.cook-short { color: #9a2f2f; font-weight: 600; }
 .cook-lines small { color: #758179; font-weight: 400; }
+
+.inventory-form-row { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.inventory-check { display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: .82rem; font-weight: 600; cursor: pointer; }
+.inventory-check input { width: auto; }

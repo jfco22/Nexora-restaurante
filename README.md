@@ -104,3 +104,9 @@ Cada formulario que desactiva su botón por una validación debe mostrar **por q
 Todos los campos numéricos usan `src/components/NumberInput.tsx`: miles con punto (1.234.567) y decimales con coma (1.234,5).
 El formulario guarda el valor sin formato y con punto decimal; las reglas están en `src/lib/numberFormat.ts`.
 Para un campo numérico nuevo, usa `<NumberInput value={raw} onChange={setRaw} />` (agrega `decimals` o `negative` si hace falta).
+
+## Compra por kilos y valor (costo por gramo)
+
+En Inventario → insumo → Registrar → Compra, los insumos en g/kg/ml/l tienen la casilla "Calcular desde kilos y valor pagado":
+escribes los kilos comprados y el valor total (o el valor por kilo) y el sistema calcula la cantidad en gramos y el costo por gramo.
+El costo por unidad admite decimales (migración `20261122000000_allow_decimal_unit_costs.sql`).

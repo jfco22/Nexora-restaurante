@@ -10,6 +10,13 @@ import {
   type MovementKind,
 } from '@/lib/inventory';
 import { formatCurrency } from '@/lib/format';
+import { FormProblem } from '@/components/FormProblem';
+import { parseDecimalText } from '@/lib/formProblems';
+
+/** Cuántas unidades del insumo hay en 1 kilo (o 1 litro) comprado. null = el insumo se cuenta por unidades. */
+const bulkFactor = (unit: InventoryItem['unit']): number | null => (unit === 'g' || unit === 'ml' ? 1000 : unit === 'kg' || unit === 'l' ? 1 : null);
+const bulkLabel = (unit: InventoryItem['unit']): string => (unit === 'ml' || unit === 'l' ? 'litros' : 'kilos');
+const round4 = (value: number): number => Math.round(value * 10000) / 10000;
 
 const kindOptions: { value: MovementKind; hint: string }[] = [
   { value: 'purchase', hint: 'Suma al stock y actualiza el costo unitario.' },
@@ -28,17 +35,49 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
   const [quantity, setQuantity] = useState('');
   const [unitCost, setUnitCost] = useState(String(item.unit_cost_cop));
   const [note, setNote] = useState('');
+  const [byWeight, setByWeight] = useState(false);
+  const [kilos, setKilos] = useState('');
+  const [total, setTotal] = useState('');
+  const [perKilo, setPerKilo] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const factor = bulkFactor(item.unit);
+  const weightMode = byWeight && factor !== null && kind === 'purchase';
+  const kilosNumber = parseDecimalText(kilos);
+  const totalNumber = parseDecimalText(total);
+  // Calculado desde kilos y valor: cantidad en la unidad del insumo y costo por esa unidad (ej. por gramo)
+  const weightQuantity = weightMode && kilosNumber > 0 && factor !== null ? round4(kilosNumber * factor) : NaN;
+  const weightCost = weightMode && Number.isFinite(weightQuantity) && weightQuantity > 0 && totalNumber >= 0 ? round4(totalNumber / weightQuantity) : NaN;
+
+  const changeKilos = (raw: string): void => {
+    setKilos(raw);
+    const k = parseDecimalText(raw);
+    const pk = parseDecimalText(perKilo);
+    if (k > 0 && Number.isFinite(pk)) setTotal(String(Math.round(k * pk)));
+    else if (k > 0 && Number.isFinite(totalNumber)) setPerKilo(String(round4(totalNumber / k)));
+  };
+  const changeTotal = (raw: string): void => {
+    setTotal(raw);
+    const t = parseDecimalText(raw);
+    setPerKilo(kilosNumber > 0 && Number.isFinite(t) ? String(round4(t / kilosNumber)) : '');
+  };
+  const changePerKilo = (raw: string): void => {
+    setPerKilo(raw);
+    const pk = parseDecimalText(raw);
+    setTotal(kilosNumber > 0 && Number.isFinite(pk) ? String(Math.round(kilosNumber * pk)) : '');
+  };
+
   // Acepta coma o punto como decimal (1,5 o 1.5)
-  const parsedQuantity = Number(quantity.trim().replace(',', '.'));
-  const quantityValid = quantity.trim() !== '' && Number.isFinite(parsedQuantity) && parsedQuantity !== 0 && Math.abs(parsedQuantity) <= 1000000
+  const parsedQuantity = weightMode ? weightQuantity : Number(quantity.trim().replace(',', '.'));
+  const quantityValid = (weightMode || quantity.trim() !== '') && Number.isFinite(parsedQuantity) && parsedQuantity !== 0 && Math.abs(parsedQuantity) <= 1000000
     && (kind === 'adjustment' || parsedQuantity > 0);
-  // El costo se guarda en pesos enteros: si escriben decimales se redondea
-  const parsedCost = Math.round(Number(unitCost.trim().replace(',', '.')));
-  const costValid = kind !== 'purchase' || (unitCost.trim() !== '' && Number.isFinite(parsedCost) && parsedCost >= 0);
-  const problem = quantity.trim() === '' ? null
+  // El costo por unidad admite decimales (ej. $26,8 por gramo); se guarda con 4 decimales
+  const parsedCost = weightMode ? weightCost : round4(Number(unitCost.trim().replace(',', '.')));
+  const costValid = kind !== 'purchase' || ((weightMode || unitCost.trim() !== '') && Number.isFinite(parsedCost) && parsedCost >= 0);
+  const problem = weightMode
+    ? (kilos.trim() === '' ? `Escribe cuántos ${bulkLabel(item.unit)} compraste.` : !(kilosNumber > 0) ? `Los ${bulkLabel(item.unit)} deben ser un número mayor que 0 (ej. 2,5).` : total.trim() === '' ? 'Escribe el valor total pagado o el valor por kilo.' : !Number.isFinite(totalNumber) || totalNumber < 0 ? 'El valor debe ser un número igual o mayor que 0.' : null)
+    : quantity.trim() === '' ? null
     : !Number.isFinite(parsedQuantity) || parsedQuantity === 0 ? 'La cantidad no es válida.'
     : kind !== 'adjustment' && parsedQuantity < 0 ? 'La cantidad debe ser mayor que cero (para restar usa Conteo/Ajuste).'
     : Math.abs(parsedQuantity) > 1000000 ? 'La cantidad es demasiado grande.'
@@ -99,6 +138,36 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
           </div>
           <p className="payment-hint">{hint}</p>
 
+          {kind === 'purchase' && factor !== null && (
+            <label className="inventory-check">
+              <input type="checkbox" checked={byWeight} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setByWeight(event.target.checked)} />
+              Calcular desde {bulkLabel(item.unit)} y valor pagado
+            </label>
+          )}
+
+          {weightMode ? (
+            <>
+              <div className="inventory-form-row">
+                <label>
+                  {bulkLabel(item.unit) === 'litros' ? 'Litros comprados' : 'Kilos comprados'}
+                  <NumberInput value={kilos} onChange={changeKilos} decimals />
+                </label>
+                <label>
+                  Valor total pagado
+                  <NumberInput value={total} onChange={changeTotal} />
+                </label>
+                <label>
+                  Valor por {bulkLabel(item.unit) === 'litros' ? 'litro' : 'kilo'}
+                  <NumberInput value={perKilo} onChange={changePerKilo} decimals />
+                </label>
+              </div>
+              {Number.isFinite(weightQuantity) && Number.isFinite(weightCost) && (
+                <p className="payment-hint">
+                  Se registran <strong>{formatQuantity(weightQuantity, item.unit)}</strong> a <strong>${weightCost.toLocaleString('es-CO', { maximumFractionDigits: 4 })} por {item.unit}</strong>.
+                </p>
+              )}
+            </>
+          ) : (
           <div className="inventory-form-row">
             <label>
               Cantidad ({item.unit})
@@ -111,6 +180,7 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
               </label>
             )}
           </div>
+          )}
 
           <label>
             Nota (opcional)
@@ -121,12 +191,12 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
             <span>Stock actual {formatQuantity(item.current_stock, item.unit)}</span>
             <strong>Quedará en {formatQuantity(stockAfter, item.unit)}</strong>
             {kind === 'purchase' && quantityValid && costValid && (
-              <small>Costo de esta compra {formatCurrency(Math.round(parsedQuantity * parsedCost))}</small>
+              <small>Costo de esta compra {formatCurrency(Math.round(parsedQuantity * parsedCost))}{item.unit !== 'unidad' && parsedCost > 0 ? ` · $${parsedCost.toLocaleString('es-CO', { maximumFractionDigits: 4 })} por ${item.unit}` : ''}</small>
             )}
           </div>
         </div>
 
-        {problem && <p className="auth-feedback error" role="alert">{problem}</p>}
+        <FormProblem message={problem} />
         {error && <p className="auth-feedback error" role="alert">{error}</p>}
 
         <div className="inventory-form-footer">
