@@ -26,5 +26,5 @@
 
 .delete-confirm-cell { color: #a64d38; font-size: .8rem; font-weight: 600; }
 
-.import-preview-table td input[type="number"] { max-width: 90px; }
+.import-preview-table td input[inputmode] { max-width: 90px; }
 .import-preview-table td select { max-width: 70px; }
