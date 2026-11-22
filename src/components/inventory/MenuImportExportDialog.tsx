@@ -1,3 +1,4 @@
+import { NumberInput } from '@/components/NumberInput';
 import { useCallback, useState } from 'react';
 import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertTriangle, X, Trash2, Pencil, Save, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -521,7 +522,7 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
                             <>
                               <td><input className="crud-input" value={editDraft.category} onChange={(e) => setEditDraft({ ...editDraft, category: e.target.value })} /></td>
                               <td><input className="crud-input" value={editDraft.name} onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })} /></td>
-                              <td><input className="crud-input" type="number" value={editDraft.price_cop} onChange={(e) => setEditDraft({ ...editDraft, price_cop: parseInt(e.target.value) || 0 })} /></td>
+                              <td><NumberInput className="crud-input" value={String(editDraft.price_cop)} onChange={(raw: string) => setEditDraft({ ...editDraft, price_cop: parseInt(raw, 10) || 0 })} /></td>
                               <td><select className="crud-input" value={editDraft.is_available ? 'si' : 'no'} onChange={(e) => setEditDraft({ ...editDraft, is_available: e.target.value === 'si' })}><option value="si">Sí</option><option value="no">No</option></select></td>
                               <td colSpan={2}>
                                 <div className="crud-row-actions">
@@ -588,7 +589,7 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
                             <>
                               <td><input className="crud-input" value={editProduct.category_name} onChange={(e) => setEditProduct({ ...editProduct, category_name: e.target.value })} /></td>
                               <td><input className="crud-input" value={editProduct.name} onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })} /></td>
-                              <td><input className="crud-input" type="number" value={editProduct.price_cop} onChange={(e) => setEditProduct({ ...editProduct, price_cop: parseInt(e.target.value) || 0 })} /></td>
+                              <td><NumberInput className="crud-input" value={String(editProduct.price_cop)} onChange={(raw: string) => setEditProduct({ ...editProduct, price_cop: parseInt(raw, 10) || 0 })} /></td>
                               <td><select className="crud-input" value={editProduct.is_available ? 'si' : 'no'} onChange={(e) => setEditProduct({ ...editProduct, is_available: e.target.value === 'si' })}><option value="si">Sí</option><option value="no">No</option></select></td>
                               <td>
                                 <div className="crud-row-actions">

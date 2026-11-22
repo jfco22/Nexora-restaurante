@@ -1,3 +1,4 @@
+import { NumberInput } from '@/components/NumberInput';
 import { FormProblem } from '@/components/FormProblem';
 import { useState } from 'react';
 import { Archive, ArchiveRestore, X } from 'lucide-react';
@@ -103,7 +104,7 @@ export function ItemDialog({ item, onSaved, onClose }: ItemDialogProps) {
 
           <label>
             Stock mínimo para alertar
-            <input type="number" inputMode="decimal" min={0} step="any" value={minStock} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMinStock(event.target.value)} />
+            <NumberInput value={minStock} onChange={setMinStock} decimals />
           </label>
         </div>
 

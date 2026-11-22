@@ -1,3 +1,4 @@
+import { NumberInput } from '@/components/NumberInput';
 import { FormProblem } from '@/components/FormProblem';
 import { wholeAmountProblem } from '@/lib/formProblems';
 import { useState } from 'react';
@@ -76,7 +77,7 @@ function OpenShiftForm({ onChanged }: OpenShiftFormProps) {
       <p className="cash-intro">Registra el efectivo con el que empiezas el turno. Los cobros en efectivo se sumarán a este valor.</p>
       <label>
         Fondo inicial en caja
-        <input type="number" inputMode="numeric" min={0} step={1} value={opening} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setOpening(event.target.value)} />
+        <NumberInput value={opening} onChange={setOpening} />
       </label>
       <FormProblem message={openingProblem} />
       {error && <p className="auth-feedback error" role="alert">{error}</p>}
@@ -137,7 +138,7 @@ function OpenShiftView({ shift, onClosed, onChanged }: OpenShiftViewProps) {
 
       <label>
         Efectivo contado
-        <input type="number" inputMode="numeric" min={0} step={1} value={counted} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCounted(event.target.value)} />
+        <NumberInput value={counted} onChange={setCounted} />
       </label>
       {liveDifference !== null && (
         <p className={`cash-difference ${liveDifference === 0 ? 'even' : liveDifference > 0 ? 'over' : 'short'}`}>

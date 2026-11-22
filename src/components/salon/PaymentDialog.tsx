@@ -1,3 +1,4 @@
+import { NumberInput } from '@/components/NumberInput';
 import { FormProblem } from '@/components/FormProblem';
 import { wholeAmountProblem } from '@/lib/formProblems';
 import { useState } from 'react';
@@ -78,7 +79,7 @@ export function PaymentDialog({ balance, onRegister, onClose }: PaymentDialogPro
 
         <label>
           Valor a cobrar
-          <input type="number" inputMode="numeric" min={1} max={balance} step={1} value={amount} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAmount(event.target.value)} />
+          <NumberInput value={amount} onChange={setAmount} />
         </label>
 
         {method === 'bre_b' && (

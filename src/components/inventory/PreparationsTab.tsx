@@ -1,3 +1,4 @@
+import { NumberInput } from '@/components/NumberInput';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChefHat, Upload, X } from 'lucide-react';
 import { fetchCatalogForRecipes, formatQuantity, type CatalogProduct, type InventoryItem, type RecipeLine } from '@/lib/inventory';
@@ -165,7 +166,7 @@ function CookDialog({ preparation, itemById, products, recipeLines, onClose, onC
         <div className="inventory-form">
           <label>
             ¿Cuántas tandas?
-            <input type="number" inputMode="decimal" min={0.5} step={0.5} value={batchesText} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setBatchesText(event.target.value)} />
+            <NumberInput value={batchesText} onChange={setBatchesText} decimals />
           </label>
 
           <div className="inventory-preview">

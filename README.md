@@ -98,3 +98,9 @@ Cada formulario que desactiva su botón por una validación debe mostrar **por q
 - Los errores que vienen de Supabase pasan por `userFacingError` (`src/lib/tableAccount.ts`), que traduce los códigos
   (permiso, duplicado, en uso, fuera de rango, falta una migración, sesión vencida, sin conexión) y muestra el código técnico
   cuando no lo reconoce. Los mensajes `RAISE EXCEPTION` de las funciones SQL (código P0001) se muestran tal cual.
+
+## Campos numéricos con formato colombiano
+
+Todos los campos numéricos usan `src/components/NumberInput.tsx`: miles con punto (1.234.567) y decimales con coma (1.234,5).
+El formulario guarda el valor sin formato y con punto decimal; las reglas están en `src/lib/numberFormat.ts`.
+Para un campo numérico nuevo, usa `<NumberInput value={raw} onChange={setRaw} />` (agrega `decimals` o `negative` si hace falta).

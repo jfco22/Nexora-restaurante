@@ -1,3 +1,4 @@
+import { NumberInput } from '@/components/NumberInput';
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import '@/components/salon/account.css';
@@ -101,12 +102,12 @@ export function MovementDialog({ item, onRegistered, onClose }: MovementDialogPr
           <div className="inventory-form-row">
             <label>
               Cantidad ({item.unit})
-              <input type="text" inputMode="decimal" value={quantity} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuantity(event.target.value)} />
+              <NumberInput value={quantity} onChange={setQuantity} decimals negative={kind === 'adjustment'} />
             </label>
             {kind === 'purchase' && (
               <label>
                 Costo por {item.unit}
-                <input type="text" inputMode="decimal" value={unitCost} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUnitCost(event.target.value)} />
+                <NumberInput value={unitCost} onChange={setUnitCost} decimals />
               </label>
             )}
           </div>

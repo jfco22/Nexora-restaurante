@@ -1,3 +1,4 @@
+import { NumberInput } from '@/components/NumberInput';
 import { FormProblem } from '@/components/FormProblem';
 import { useState } from 'react';
 import { Trash2, X } from 'lucide-react';
@@ -105,7 +106,7 @@ export function RecipeDialog({ product, items, lines, onChanged, onClose }: Reci
                 </label>
                 <label>
                   Cantidad {selectedItem ? `(${selectedItem.unit})` : ''}
-                  <input type="number" inputMode="decimal" min={0} step="any" value={quantity} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuantity(event.target.value)} />
+                  <NumberInput value={quantity} onChange={setQuantity} decimals />
                 </label>
               </div>
               <FormProblem message={problem} />
