@@ -110,3 +110,19 @@ Para un campo numérico nuevo, usa `<NumberInput value={raw} onChange={setRaw} /
 En Inventario → insumo → Registrar → Compra, los insumos en g/kg/ml/l tienen la casilla "Calcular desde kilos y valor pagado":
 escribes los kilos comprados y el valor total (o el valor por kilo) y el sistema calcula la cantidad en gramos y el costo por gramo.
 El costo por unidad admite decimales (migración `20261122000000_allow_decimal_unit_costs.sql`).
+
+## Sin internet (instalar la app y vender sin señal)
+
+**Instalar:** abre la app en Chrome o Edge y usa "Instalar" en la barra de direcciones (en el celular: menú → "Añadir a pantalla de inicio"). Se instala como una app, con su icono, y **abre aunque no haya internet** (el service worker `public/sw.js` guarda la app y las fotos de la carta).
+
+**Vender sin internet:** cuando se cae la señal aparece un aviso rojo "Sin internet". En **Carta**, el botón del pedido cambia a *Cobrar en efectivo* / *Cobrar con tarjeta*. La venta se guarda en este equipo y **sube sola** al volver el internet (se reintenta cada 30 s); al subir se borra del equipo. La caja debe estar abierta.
+
+- La función `sync_nexora_offline_sale` (migración `20261123000000_add_nexora_offline_sales.sql`) es **idempotente**: si la señal se corta a mitad de la subida y se reintenta, la venta no se duplica.
+- Ya vendida es ya vendida: nunca se rechaza por falta de stock; el inventario se descuenta aunque quede en negativo (se corrige con un ajuste).
+- El pago queda con la hora real de la venta y en el turno de caja abierto en ese momento. Se usan los precios vigentes al subir.
+- Bre-B necesita internet (hay que confirmar la referencia con el banco). Salón, Cocina, Inventario e Inicio también necesitan internet.
+- Cada equipo guarda sus propias ventas: los equipos **no se hablan entre sí** sin internet, así que la cocina no verá el pedido hasta que suba.
+- Si una venta es rechazada, queda en rojo con el motivo y se puede descartar; las demás siguen subiendo.
+- Se guarda una copia de la última carta, opciones, caja y perfil para poder trabajar sin señal. Para que exista, el equipo debe haber abierto la app con internet al menos una vez ese día.
+
+Código: `src/lib/offline/` (almacén, sincronización, conectividad) y `src/components/OfflineStatusBar.tsx`.

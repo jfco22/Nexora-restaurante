@@ -1,0 +1,15 @@
+.offline-bar { display: grid; gap: 8px; margin: 0 0 16px; }
+.offline-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--offline-border, #e6d7b8); background: var(--offline-bg, #fff7e6); color: #5a4313; }
+.offline-row > svg { flex: none; margin-top: 2px; }
+.offline-row > div { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.offline-row strong { font-size: 14px; }
+.offline-row span { font-size: 13px; line-height: 1.4; }
+.offline-row .outline-button { flex: none; align-self: center; }
+.offline-row.offline { background: #fdecea; border-color: #f2c4bd; color: #7a2418; }
+.offline-row.failed { background: #fdecea; border-color: #f2c4bd; color: #7a2418; }
+.offline-row.pending { background: #eaf4ec; border-color: #c3dcc8; color: #1f4a2b; }
+.offline-reason { font-weight: 600; }
+.offline-row .spin { animation: offline-spin 1s linear infinite; }
+@keyframes offline-spin { to { transform: rotate(360deg); } }
+.offline-sale-actions { display: grid; gap: 8px; }
+.offline-sale-actions small { color: #7a2418; font-size: 12px; line-height: 1.4; }

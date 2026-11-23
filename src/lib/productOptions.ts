@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { readCache, writeCache } from '@/lib/offline/cache';
 
 
 export type OptionChoice = { id: string; name: string };
@@ -34,10 +35,11 @@ export function choiceNames(option: ProductOption | undefined, choiceIds: string
 
 export async function fetchProductOptions(): Promise<ProductOptionMap> {
   const { data, error } = await supabase.rpc('get_nexora_product_options');
-  // Si la migración de opciones aún no está aplicada, la carta sigue funcionando sin opciones.
-  if (error || !Array.isArray(data)) return {};
+  // Sin internet usamos las últimas opciones guardadas; si la migración de opciones aún no está aplicada, la carta sigue sin opciones.
+  if (error || !Array.isArray(data)) return readCache<ProductOptionMap>('product-options')?.value ?? {};
   const map: ProductOptionMap = {};
   for (const option of data as ProductOption[]) map[option.product_id] = option;
+  writeCache('product-options', map);
   return map;
 }
 

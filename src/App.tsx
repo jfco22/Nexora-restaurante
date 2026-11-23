@@ -44,6 +44,10 @@ import { TeamView } from '@/components/equipo/TeamView';
 import { ForgotPasswordScreen } from '@/components/auth/ForgotPasswordScreen';
 import { useDashboardData, methodLabels } from '@/lib/dashboardData';
 import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
+import { OfflineStatusBar } from '@/components/OfflineStatusBar';
+import { readCache, writeCache } from '@/lib/offline/cache';
+import { addSale, newClientId, removeSale, methodLabel, type OfflineMethod, type OfflineSale } from '@/lib/offline/salesStore';
+import { useConnectivity, useOfflineSales } from '@/lib/offline/useOffline';
 import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions, type ProductOptionMap } from '@/lib/productOptions';
 
 type View = 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo';
@@ -86,6 +90,8 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const productOptions = useProductOptions();
+  const online = useConnectivity();
+  const offlineSales = useOfflineSales(Boolean(session), online);
   const [dataError, setDataError] = useState<string | null>(null);
   const [orderMessage, setOrderMessage] = useState<string | null>(null);
   const [category, setCategory] = useState('Todos');
@@ -123,7 +129,13 @@ function App() {
     ]);
 
     if (categoriesResult.error || productsResult.error || availabilityResult.error) {
-      setDataError('No pudimos cargar la carta desde la base de datos.');
+      const cached = readCache<Product[]>('catalog');
+      if (cached) {
+        setProducts(cached.value);
+        setDataError(`Sin conexión con el servidor: se muestra la carta guardada el ${new Date(cached.savedAt).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}. Los agotados pueden no estar al día.`);
+      } else {
+        setDataError('No pudimos cargar la carta desde la base de datos.');
+      }
       return;
     }
 
@@ -144,6 +156,7 @@ function App() {
     }));
     setDataError(null);
     setProducts(loadedProducts);
+    writeCache('catalog', loadedProducts);
   }, []);
 
   useEffect(() => {
@@ -163,8 +176,15 @@ function App() {
   }, [session]);
 
   const refreshCashShift = useCallback(async (): Promise<void> => {
-    const { shift } = await fetchOpenCashShift();
+    const { shift, error } = await fetchOpenCashShift();
+    if (error) {
+      // Sin internet no sabemos si la caja cambió: se conserva el último estado conocido.
+      const cached = readCache<CashShiftSummary | null>('cash-shift');
+      if (cached) setCashShift(cached.value);
+      return;
+    }
     setCashShift(shift);
+    writeCache('cash-shift', shift);
   }, []);
 
   useEffect(() => {
@@ -180,8 +200,13 @@ function App() {
         .select('display_name, role')
         .eq('id', session.user.id)
         .maybeSingle();
-      if (error || !data) return;
+      if (error || !data) {
+        const cached = readCache<UserProfile>('profile');
+        if (cached) setProfile(cached.value);
+        return;
+      }
       setProfile({ display_name: data.display_name, role: data.role });
+      writeCache('profile', { display_name: data.display_name, role: data.role });
     };
     void loadProfile();
   }, [session]);
@@ -226,6 +251,26 @@ function App() {
     setOrderMessage(`Pedido #${data[0].order_number} guardado correctamente.`);
     void loadCatalog();
     return { ok: true, orderNumber: data[0].order_number };
+  };
+
+  const submitOfflineSale = (method: OfflineMethod): void => {
+    const items = cartItems(cart);
+    if (items.length === 0) { setOrderMessage('Agrega productos antes de cobrar.'); return; }
+    if (!cashShift) { setOrderMessage('Abre la caja antes de cobrar. Toca "Caja cerrada" en el menú de la izquierda.'); return; }
+    const lines = Object.entries(cart).map(([key, quantity]: [string, number]) => {
+      const { productId, choiceIds } = parseCartKey(key);
+      const product = products.find((item: Product) => item.id === productId);
+      const detail = choiceNames(productOptions[productId], choiceIds);
+      return { name: `${product?.name ?? 'Producto'}${detail ? ` (${detail})` : ''}`, quantity, unit_price: product?.price ?? 0 };
+    });
+    const sale: OfflineSale = { clientId: newClientId(), items, lines, method, total: cartTotal, occurredAt: new Date().toISOString(), status: 'pending', message: null, attempts: 0 };
+    if (!addSale(sale)) {
+      setOrderMessage('No se pudo guardar la venta en este equipo (el navegador bloqueó o llenó el almacenamiento). No la des por registrada: anótala a mano.');
+      return;
+    }
+    setCart({});
+    offlineSales.refresh();
+    setOrderMessage(`Venta de ${formatCurrency(cartTotal)} en ${methodLabel[method].toLowerCase()} guardada en este equipo. Subirá sola cuando vuelva el internet.`);
   };
 
   if (IS_MENU_LINK) return <GuestExperience products={products} options={productOptions} onSubmitOrder={submitOrder} />;
@@ -287,8 +332,9 @@ function App() {
         {menuImportOpen && profile && MANAGING_ROLES.includes(profile.role) && <MenuImportExportDialog onClose={() => setMenuImportOpen(false)} onImported={() => void loadCatalog()} />}
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}
         {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} />}
+        <OfflineStatusBar online={online} sales={offlineSales.sales} syncing={offlineSales.syncing} onSync={() => void offlineSales.syncNow()} onDiscard={(clientId: string) => { removeSale(clientId); offlineSales.refresh(); }} />
         {dataError && <div className="data-notice" role="alert">{dataError}</div>}
-        {view === 'carta' && <MenuOrders products={products} options={productOptions} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={orderMessage} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={() => void submitOrder(cart)} onImportMenu={profile && MANAGING_ROLES.includes(profile.role) ? () => setMenuImportOpen(true) : undefined} />}
+        {view === 'carta' && <MenuOrders products={products} options={productOptions} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={orderMessage} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={() => void submitOrder(cart)} onImportMenu={profile && MANAGING_ROLES.includes(profile.role) ? () => setMenuImportOpen(true) : undefined} offlineSale={!online ? submitOfflineSale : undefined} />}
       </main>
     </div>
   );
@@ -347,9 +393,9 @@ function QuickCard({ icon, label, value, action, onClick }: { icon: React.ReactN
   return <article className="quick-card"><div className="quick-card-top"><span>{icon}</span><ShoppingBag size={15} /></div><p>{label}</p><strong>{value}</strong><button className="text-button" type="button" onClick={onClick}>{action} <ArrowUpRight size={14} /></button></article>;
 }
 
-type MenuOrdersProps = { products: Product[]; options: ProductOptionMap; cart: Record<string, number>; cartCount: number; cartTotal: number; category: string; filteredProducts: Product[]; orderMessage: string | null; onCategoryChange: (category: string) => void; onSearchChange: (value: string) => void; onUpdateCart: (productId: string, change: number) => void; onSubmitOrder: () => void; onImportMenu?: () => void };
+type MenuOrdersProps = { products: Product[]; options: ProductOptionMap; cart: Record<string, number>; cartCount: number; cartTotal: number; category: string; filteredProducts: Product[]; orderMessage: string | null; onCategoryChange: (category: string) => void; onSearchChange: (value: string) => void; onUpdateCart: (productId: string, change: number) => void; onSubmitOrder: () => void; onImportMenu?: () => void; offlineSale?: (method: OfflineMethod) => void };
 
-function MenuOrders({ products, options, cart, cartCount, cartTotal, category, filteredProducts, orderMessage, onCategoryChange, onSearchChange, onUpdateCart, onSubmitOrder, onImportMenu }: MenuOrdersProps) {
+function MenuOrders({ products, options, cart, cartCount, cartTotal, category, filteredProducts, orderMessage, onCategoryChange, onSearchChange, onUpdateCart, onSubmitOrder, onImportMenu, offlineSale }: MenuOrdersProps) {
   const [picking, setPicking] = useState<Product | null>(null);
   const updateProduct = (productId: string, change: number): void => {
     if (change > 0 && options[productId]) {
@@ -364,7 +410,7 @@ function MenuOrders({ products, options, cart, cartCount, cartTotal, category, f
     }
     onUpdateCart(productId, change);
   };
-  return <div className="page-wrap">{picking && options[picking.id] && <OptionPickerDialog productName={picking.name} option={options[picking.id]} onClose={() => setPicking(null)} onConfirm={(choiceIds: string[]) => { onUpdateCart(cartKey(picking.id, choiceIds), 1); setPicking(null); }} />}<div className="page-heading"><div><p className="eyebrow">Catálogo · Operación</p><h1>Carta y pedidos</h1><p className="muted">Elige productos visualmente y arma una nueva cuenta.</p></div><div className="page-heading-actions">{onImportMenu && <button className="outline-button" type="button" onClick={onImportMenu}><Upload size={16} /> Importar o gestionar menú</button>}<div className="order-summary"><ShoppingBag size={18} /><strong>{cartCount}</strong><span>{formatCurrency(cartTotal)}</span></div></div></div><div className="menu-toolbar"><div className="category-tabs">{['Todos', ...Array.from(new Set(products.map((product: Product) => product.category)))].map((item: string) => <button key={item} className={category === item ? 'selected' : ''} onClick={() => onCategoryChange(item)} type="button">{item}</button>)}</div><label className="search-field"><Search size={16} /><input aria-label="Buscar en la carta" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSearchChange(event.target.value)} placeholder="Buscar producto" /></label></div><div className="menu-layout"><section className="product-grid">{products.length === 0 && <p className="muted">La carta no tiene productos activos todavía. Si ya importaste el menú, recarga la página; si sigue vacía, revisa la tabla de productos en la base de datos.</p>}{filteredProducts.map((product: Product) => <ProductCard key={product.id} product={product} quantity={cartQuantityOfProduct(cart, product.id)} onUpdate={updateProduct} />)}</section><aside className="order-card"><div className="order-card-heading"><div><p className="eyebrow">Nueva cuenta</p><h2>Pedido actual</h2></div><button className="icon-button" type="button" aria-label="Cerrar pedido"><X size={17} /></button></div>{cartCount === 0 ? <div className="empty-order"><ShoppingBag size={28} /><strong>Tu pedido está vacío</strong><span>Agrega productos de la carta para comenzar.</span></div> : <><div className="order-lines">{Object.entries(cart).map(([key, quantity]: [string, number]) => { const { productId, choiceIds } = parseCartKey(key); const product = products.find((item: Product) => item.id === productId); if (!product) return null; const detail = choiceNames(options[productId], choiceIds); return <div className="order-line" key={key}><div><strong>{product.name}</strong>{detail && <span>{detail}</span>}<span>{formatCurrency(product.price)} c/u</span></div><div className="quantity-control"><button onClick={() => onUpdateCart(key, -1)} type="button"><Minus size={13} /></button><b>{quantity}</b><button onClick={() => onUpdateCart(key, 1)} type="button"><Plus size={13} /></button></div></div>; })}</div><div className="order-total"><span>Total</span><strong>{formatCurrency(cartTotal)}</strong></div><button className="primary-button full-width" onClick={() => void onSubmitOrder()} type="button">Continuar pedido <ArrowUpRight size={16} /></button>{orderMessage && <p className="order-message" role="status">{orderMessage}</p>}</>}</aside></div></div>;
+  return <div className="page-wrap">{picking && options[picking.id] && <OptionPickerDialog productName={picking.name} option={options[picking.id]} onClose={() => setPicking(null)} onConfirm={(choiceIds: string[]) => { onUpdateCart(cartKey(picking.id, choiceIds), 1); setPicking(null); }} />}<div className="page-heading"><div><p className="eyebrow">Catálogo · Operación</p><h1>Carta y pedidos</h1><p className="muted">Elige productos visualmente y arma una nueva cuenta.</p></div><div className="page-heading-actions">{onImportMenu && <button className="outline-button" type="button" onClick={onImportMenu}><Upload size={16} /> Importar o gestionar menú</button>}<div className="order-summary"><ShoppingBag size={18} /><strong>{cartCount}</strong><span>{formatCurrency(cartTotal)}</span></div></div></div><div className="menu-toolbar"><div className="category-tabs">{['Todos', ...Array.from(new Set(products.map((product: Product) => product.category)))].map((item: string) => <button key={item} className={category === item ? 'selected' : ''} onClick={() => onCategoryChange(item)} type="button">{item}</button>)}</div><label className="search-field"><Search size={16} /><input aria-label="Buscar en la carta" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSearchChange(event.target.value)} placeholder="Buscar producto" /></label></div><div className="menu-layout"><section className="product-grid">{products.length === 0 && <p className="muted">La carta no tiene productos activos todavía. Si ya importaste el menú, recarga la página; si sigue vacía, revisa la tabla de productos en la base de datos.</p>}{filteredProducts.map((product: Product) => <ProductCard key={product.id} product={product} quantity={cartQuantityOfProduct(cart, product.id)} onUpdate={updateProduct} />)}</section><aside className="order-card"><div className="order-card-heading"><div><p className="eyebrow">Nueva cuenta</p><h2>Pedido actual</h2></div><button className="icon-button" type="button" aria-label="Cerrar pedido"><X size={17} /></button></div>{cartCount === 0 ? <div className="empty-order"><ShoppingBag size={28} /><strong>Tu pedido está vacío</strong><span>Agrega productos de la carta para comenzar.</span></div> : <><div className="order-lines">{Object.entries(cart).map(([key, quantity]: [string, number]) => { const { productId, choiceIds } = parseCartKey(key); const product = products.find((item: Product) => item.id === productId); if (!product) return null; const detail = choiceNames(options[productId], choiceIds); return <div className="order-line" key={key}><div><strong>{product.name}</strong>{detail && <span>{detail}</span>}<span>{formatCurrency(product.price)} c/u</span></div><div className="quantity-control"><button onClick={() => onUpdateCart(key, -1)} type="button"><Minus size={13} /></button><b>{quantity}</b><button onClick={() => onUpdateCart(key, 1)} type="button"><Plus size={13} /></button></div></div>; })}</div><div className="order-total"><span>Total</span><strong>{formatCurrency(cartTotal)}</strong></div>{offlineSale ? <div className="offline-sale-actions"><button className="primary-button full-width" onClick={() => offlineSale('cash')} type="button">Cobrar en efectivo (sin internet)</button><button className="outline-button full-width" onClick={() => offlineSale('card')} type="button">Cobrar con tarjeta (sin internet)</button><small>Sin internet la venta se guarda en este equipo y sube sola después. Bre-B necesita internet para confirmar la referencia.</small></div> : <button className="primary-button full-width" onClick={() => void onSubmitOrder()} type="button">Continuar pedido <ArrowUpRight size={16} /></button>}{orderMessage && <p className="order-message" role="status">{orderMessage}</p>}</>}</aside></div></div>;
 }
 
 function ProductCard({ product, quantity, onUpdate }: { product: Product; quantity: number; onUpdate: (productId: string, change: number) => void }) {
