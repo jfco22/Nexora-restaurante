@@ -1,0 +1,51 @@
+.shift-pill { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 9px 12px; border-radius: 12px; font-size: .8rem; line-height: 1.3; color: #1f4a2b; background: #eaf4ec; border: 1px solid #c3dcc8; }
+.shift-pill.off { color: #5a4313; background: #fff7e6; border-color: #e6d7b8; }
+.shift-pill strong { display: block; font-size: .82rem; }
+.shift-pill .pulse { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #2f9e5b; animation: shift-pulse 2s ease-in-out infinite; }
+.shift-pill.off .pulse { background: #c98a1a; animation: none; }
+@keyframes shift-pulse { 50% { opacity: .35; } }
+
+.device-gate { display: grid; min-height: 100vh; padding: 24px; place-items: center; background: #fff7f0; }
+.device-gate-card { width: min(480px, 100%); padding: 32px; border-radius: 20px; background: #fff; box-shadow: 0 24px 60px rgba(39, 49, 45, .14); text-align: center; }
+.device-gate-card h1 { margin: 12px 0 8px; font-size: 1.5rem; }
+.device-gate-card p { margin: 0 0 12px; color: #4a5750; line-height: 1.5; }
+.device-gate-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+
+.hours-grid { display: grid; gap: 16px; }
+.hours-panel { padding: 20px; }
+.hours-panel h2 { margin: 0 0 4px; font-size: 1.05rem; }
+.hours-panel > .muted { margin: 0 0 14px; }
+.hours-device { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.hours-device > div { flex: 1; min-width: 200px; }
+.hours-device-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hours-device-form input { min-width: 220px; padding: 10px 12px; border: 1px solid #e0e5df; border-radius: 10px; font: inherit; }
+
+.hours-ranges { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+.hours-ranges .chip { padding: 8px 14px; border: 1px solid #e0e5df; border-radius: 999px; background: #fff; color: #27312d; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.hours-ranges .chip.active { color: #fff; background: #d9593b; border-color: #d9593b; }
+.hours-ranges input[type="date"] { padding: 8px 10px; border: 1px solid #e0e5df; border-radius: 10px; font: inherit; font-size: .85rem; }
+
+.hours-total { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 14px; }
+.hours-total strong { display: block; font-size: 1.6rem; color: #27312d; }
+.hours-total span { color: #68756d; font-size: .82rem; }
+
+.hours-person { border-top: 1px solid #edf1ec; }
+.hours-person summary { display: flex; align-items: center; gap: 12px; padding: 14px 0; cursor: pointer; list-style: none; }
+.hours-person summary::-webkit-details-marker { display: none; }
+.hours-person summary .name { flex: 1; min-width: 0; font-weight: 700; color: #27312d; }
+.hours-person summary .total { font-weight: 700; font-variant-numeric: tabular-nums; }
+.hours-live { padding: 2px 8px; border-radius: 999px; color: #1f4a2b; background: #eaf4ec; font-size: .72rem; font-weight: 700; }
+.hours-day { margin: 0 0 12px 0; padding-left: 12px; border-left: 3px solid #edf1ec; }
+.hours-day-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 4px; color: #4a5750; font-size: .85rem; font-weight: 700; }
+.hours-session { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 0; font-size: .85rem; color: #27312d; }
+.hours-session .when { min-width: 150px; font-variant-numeric: tabular-nums; }
+.hours-session .meta { flex: 1; min-width: 120px; color: #68756d; }
+.hours-session .badge { padding: 2px 8px; border-radius: 999px; color: #5a4313; background: #fff1cf; font-size: .7rem; font-weight: 700; }
+.hours-session button { padding: 4px 10px; border: 1px solid #e0e5df; border-radius: 8px; background: #fff; font: inherit; font-size: .78rem; cursor: pointer; }
+
+.hours-devices { list-style: none; margin: 0; padding: 0; }
+.hours-devices li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #edf1ec; }
+.hours-devices li:first-child { border-top: 0; }
+.hours-devices .info { flex: 1; min-width: 160px; }
+.hours-devices .info small { display: block; color: #68756d; }
+.hours-devices .off { color: #8a968e; text-decoration: line-through; }

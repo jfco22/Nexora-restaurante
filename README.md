@@ -128,3 +128,22 @@ El costo por unidad admite decimales (migración `20261122000000_allow_decimal_u
 Código: `src/lib/offline/` (almacén, sincronización, conectividad) y `src/components/OfflineStatusBar.tsx`.
 
 **Campos numéricos:** al entrar a un campo que tiene el 0 por defecto, el 0 se quita solo. Si se sale del campo sin escribir nada, aparece el aviso "Este campo no puede quedar vacío" (escribe 0 si no aplica). Está en `src/components/NumberInput.tsx`, así que vale para todos los formularios.
+
+## Control de horas trabajadas
+
+Cuenta las horas y minutos de cada persona **solo cuando entra desde un equipo asignado al restaurante** (la tablet o el PC de la caja). Menú **Horas**.
+
+**Puesta en marcha (una sola vez):**
+1. En Supabase, SQL Editor: correr `supabase/migrations/20261124000000_add_nexora_work_time.sql`.
+2. En la tablet/PC del restaurante, entrar como **propietario o gerente** → **Horas** → *Asignar este equipo* (ponerle nombre, ej. "Caja principal"). Se guarda un código secreto en ese navegador; en la base solo queda su huella.
+3. Repetir en cada equipo (cocina, otra caja…). Para que funcione como app, instalarla (ver "Sin internet").
+
+**Cómo funciona:**
+- Cajero, mesero, cocina e inventario **solo pueden usar la app desde un equipo asignado**; desde cualquier otro sitio ven "Este equipo no está autorizado". Propietario, gerente, marketing y auditor pueden entrar desde cualquier lugar (sus horas solo cuentan en equipos asignados). Roles en `DEVICE_REQUIRED_ROLES` (`src/lib/workTime.ts`).
+- El turno **empieza solo** al entrar desde un equipo asignado y la app manda una señal cada minuto. Termina al **cerrar sesión** (Mi perfil). Si la señal se pierde más de 5 minutos, el turno se cierra a la hora de la última señal; si solo se cayó el internet con la app abierta, el turno continúa (máximo 6 h).
+- Solo un turno abierto por persona: si entra desde otro equipo, el anterior se cierra.
+- Cada persona ve sus horas; propietario y gerente ven las de todos, por día, semana, mes o fechas elegidas.
+- Propietario y gerente pueden **corregir** o **agregar** un turno (motivo obligatorio; queda registrado quién y por qué). Un equipo perdido se **desactiva** en Horas y deja de funcionar al instante.
+- Las horas y días se calculan en hora de Colombia.
+
+**Límite honesto:** el bloqueo de equipos no autorizados lo aplica la app; la base de datos solo cuenta horas desde equipos asignados. No es una barrera contra alguien técnico que hable directo con la API; para eso se necesitaría exigir el código del equipo en cada consulta (se puede agregar después).

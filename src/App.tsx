@@ -45,12 +45,17 @@ import { ForgotPasswordScreen } from '@/components/auth/ForgotPasswordScreen';
 import { useDashboardData, methodLabels } from '@/lib/dashboardData';
 import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
 import { OfflineStatusBar } from '@/components/OfflineStatusBar';
+import { HoursView } from '@/components/horas/HoursView';
+import { ShiftPill } from '@/components/horas/ShiftPill';
+import { DeviceGate } from '@/components/horas/DeviceGate';
+import { useWorkTracking } from '@/lib/useWorkTracking';
+import { deviceRequiredFor } from '@/lib/workTime';
 import { readCache, writeCache } from '@/lib/offline/cache';
 import { addSale, newClientId, removeSale, methodLabel, type OfflineMethod, type OfflineSale } from '@/lib/offline/salesStore';
 import { useConnectivity, useOfflineSales } from '@/lib/offline/useOffline';
 import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions, type ProductOptionMap } from '@/lib/productOptions';
 
-type View = 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo';
+type View = 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo' | 'horas';
 
 type Product = {
   id: string;
@@ -92,6 +97,7 @@ function App() {
   const productOptions = useProductOptions();
   const online = useConnectivity();
   const offlineSales = useOfflineSales(Boolean(session), online);
+  const tracking = useWorkTracking(session);
   const [dataError, setDataError] = useState<string | null>(null);
   const [orderMessage, setOrderMessage] = useState<string | null>(null);
   const [category, setCategory] = useState('Todos');
@@ -279,6 +285,16 @@ function App() {
   if (!session && forgotPassword) return <ForgotPasswordScreen onBack={() => setForgotPassword(false)} />;
   if (!session && guestMode) return <GuestExperience products={products} onSubmitOrder={submitOrder} />;
 
+  const signOutNow = async (): Promise<void> => {
+    await tracking.finish(); // cierra el turno antes de salir
+    await supabase.auth.signOut();
+  };
+  // El personal solo puede trabajar desde un equipo asignado al restaurante.
+  if (session && profile && deviceRequiredFor(profile.role)) {
+    if (tracking.status === 'checking') return <div className="auth-loading">Verificando este equipo...</div>;
+    if (tracking.status === 'not_authorized') return <DeviceGate onRetry={tracking.recheck} onSignOut={() => void signOutNow()} />;
+  }
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -289,6 +305,7 @@ function App() {
           {cashShift ? 'Caja abierta' : 'Caja cerrada'}
           {cashShift && <span>desde {formatOpenedAt(cashShift.opened_at)}</span>}
         </button>
+        <ShiftPill tracking={tracking} isManager={Boolean(profile && MANAGING_ROLES.includes(profile.role))} />
 
         <nav className="main-nav" aria-label="Navegación principal">
           <p className="nav-label">Operación</p>
@@ -306,6 +323,7 @@ function App() {
           <NavButton icon={<Users size={17} />} label="Clientes" active={false} onClick={() => setView('inicio')} />
           <p className="nav-label">Administración</p>
           {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<Users size={17} />} label="Equipo" active={view === 'equipo'} onClick={() => setView('equipo')} />}
+          <NavButton icon={<Clock3 size={17} />} label="Horas" active={view === 'horas'} onClick={() => setView('horas')} />
           <NavButton icon={<WalletCards size={17} />} label="Compras y gastos" active={false} onClick={() => setView('inicio')} />
           <NavButton icon={<BarChart3 size={17} />} label="Reportes" active={false} onClick={() => setView('inicio')} />
           <NavButton icon={<Users size={17} />} label="Mi perfil" active={view === 'perfil'} onClick={() => setView('perfil')} />
@@ -319,7 +337,7 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark">N</span>Nexora</div>
-          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : 'Carta y pedidos'}</strong></div>
+          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : view === 'horas' ? 'Horas' : 'Carta y pedidos'}</strong></div>
           <div className="topbar-actions"><button className="icon-button" type="button" aria-label="Notificaciones"><Bell size={18} /></button><span className="language">ES</span><span className="avatar">{(profile?.display_name?.slice(0, 2) ?? 'MA').toUpperCase()}</span></div>
         </header>
 
@@ -331,7 +349,8 @@ function App() {
         {importOpen && <InventoryImportDialog onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); setView('inventario'); }} />}
         {menuImportOpen && profile && MANAGING_ROLES.includes(profile.role) && <MenuImportExportDialog onClose={() => setMenuImportOpen(false)} onImported={() => void loadCatalog()} />}
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}
-        {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} />}
+        {view === 'horas' && <HoursView isManager={Boolean(profile && MANAGING_ROLES.includes(profile.role))} tracking={tracking} />}
+        {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} onSignOut={signOutNow} />}
         <OfflineStatusBar online={online} sales={offlineSales.sales} syncing={offlineSales.syncing} onSync={() => void offlineSales.syncNow()} onDiscard={(clientId: string) => { removeSale(clientId); offlineSales.refresh(); }} />
         {dataError && <div className="data-notice" role="alert">{dataError}</div>}
         {view === 'carta' && <MenuOrders products={products} options={productOptions} cart={cart} cartCount={cartCount} cartTotal={cartTotal} category={category} filteredProducts={filteredProducts} orderMessage={orderMessage} onCategoryChange={setCategory} onSearchChange={setSearch} onUpdateCart={updateCart} onSubmitOrder={() => void submitOrder(cart)} onImportMenu={profile && MANAGING_ROLES.includes(profile.role) ? () => setMenuImportOpen(true) : undefined} offlineSale={!online ? submitOfflineSale : undefined} />}
@@ -484,9 +503,9 @@ function AuthScreen({ onGuestAccess, onForgotPassword }: { onGuestAccess: () => 
   return <main className="auth-shell"><section className="auth-card"><div className="auth-brand"><span className="brand-mark">N</span><strong>Nexora</strong></div><p className="eyebrow">Restaurant OS</p><h1>{isSignUp ? 'Crea tu espacio de trabajo' : 'Bienvenido de nuevo'}</h1><p className="auth-description">{isSignUp ? 'Empieza a organizar la operación de tu restaurante.' : 'Ingresa para continuar con la operación de tu restaurante.'}</p><form onSubmit={(event: React.FormEvent<HTMLFormElement>) => void handleSubmit(event)}>{isSignUp && <label>Nombre<input value={displayName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value)} placeholder="Tu nombre" required /></label>}<label>Correo electrónico<input type="email" value={email} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)} placeholder="tu@restaurante.com" required /></label><label>Contraseña<input type="password" minLength={6} value={password} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)} placeholder="Mínimo 6 caracteres" required /></label>{error && <p className="auth-feedback error" role="alert">{error}</p>}{message && <p className="auth-feedback success" role="status">{message}</p>}<button className="primary-button auth-submit" type="submit" disabled={busy}><LogIn size={16} />{busy ? 'Procesando...' : isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}</button></form><button className="auth-switch" type="button" onClick={() => { setIsSignUp((current: boolean) => !current); setError(null); setMessage(null); }}>{isSignUp ? 'Ya tengo una cuenta' : 'Crear una cuenta'}</button><button className="guest-access" type="button" onClick={onGuestAccess}>Continuar como cliente invitado</button>{!isSignUp && <button className="auth-link" type="button" onClick={onForgotPassword}>¿Olvidaste tu contraseña?</button>}</section></main>;
 }
 
-type ProfileScreenProps = { profile: UserProfile | null; session: Session | null; onProfileUpdated: (profile: UserProfile) => void };
+type ProfileScreenProps = { profile: UserProfile | null; session: Session | null; onProfileUpdated: (profile: UserProfile) => void; onSignOut: () => Promise<void> };
 
-function ProfileScreen({ profile, session, onProfileUpdated }: ProfileScreenProps) {
+function ProfileScreen({ profile, session, onProfileUpdated, onSignOut }: ProfileScreenProps) {
   const [displayName, setDisplayName] = useState(profile?.display_name ?? '');
   const role = profile?.role ?? 'owner';
   const [busy, setBusy] = useState(false);
@@ -516,7 +535,7 @@ function ProfileScreen({ profile, session, onProfileUpdated }: ProfileScreenProp
   };
 
   const handleSignOut = async (): Promise<void> => {
-    await supabase.auth.signOut();
+    await onSignOut();
   };
 
   return <div className="page-wrap"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Mi perfil</h1><p className="muted">Personaliza tu nombre. Tu rol lo asigna un administrador.</p></div></div><div className="profile-screen"><section className="profile-card"><div className="profile-avatar-large">{(displayName?.slice(0, 2) ?? session?.user.email?.slice(0, 2) ?? 'NX').toUpperCase()}</div><div className="profile-info"><strong>{displayName || 'Usuario Nexora'}</strong><span className="profile-role-badge">{roleLabels[role] ?? 'Propietario'}</span><small>{session?.user.email ?? ''}</small></div></section><form className="profile-form" onSubmit={(event: React.FormEvent<HTMLFormElement>) => void handleSave(event)}><label>Nombre para mostrar<input value={displayName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value)} placeholder="Tu nombre" required /></label><p className="muted">Rol en el equipo: <strong>{roleLabels[role] ?? 'Propietario'}</strong></p>{error && <p className="auth-feedback error" role="alert">{error}</p>}{message && <p className="auth-feedback success" role="status">{message}</p>}<button className="primary-button" type="submit" disabled={busy}>{busy ? 'Guardando...' : 'Guardar cambios'}</button></form><button className="auth-switch" type="button" onClick={() => void handleSignOut()}>Cerrar sesión</button></div></div>;
