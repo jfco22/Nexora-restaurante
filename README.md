@@ -126,3 +126,5 @@ El costo por unidad admite decimales (migración `20261122000000_allow_decimal_u
 - Se guarda una copia de la última carta, opciones, caja y perfil para poder trabajar sin señal. Para que exista, el equipo debe haber abierto la app con internet al menos una vez ese día.
 
 Código: `src/lib/offline/` (almacén, sincronización, conectividad) y `src/components/OfflineStatusBar.tsx`.
+
+**Campos numéricos:** al entrar a un campo que tiene el 0 por defecto, el 0 se quita solo. Si se sale del campo sin escribir nada, aparece el aviso "Este campo no puede quedar vacío" (escribe 0 si no aplica). Está en `src/components/NumberInput.tsx`, así que vale para todos los formularios.
