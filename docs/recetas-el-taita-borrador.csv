@@ -34,6 +34,7 @@ Perro con una carne;Salsa rosada;10;ml;nevera
 Perro con una carne;Salsa mostaza;10;ml;nevera
 Perro con una carne;Salsa roja;10;ml;nevera
 Perro con una carne;Huevo de codorniz;1;unidad;nevera
+Perro con una carne;Hogao;60;g;nevera
 Perro con Res Mechada;Pan artesanal perro;1;unidad;estanteria
 Perro con Res Mechada;Salchicha americana;1;unidad;nevera
 Perro con Res Mechada;Papa fosforito;20;g;estanteria
@@ -71,7 +72,7 @@ Sándwich de Res Mechada;Tomate;37,5;g;estanteria
 Sándwich de Res Mechada;Lechuga;1;unidad;nevera
 Sándwich de Res Mechada;Salsa de la casa;;ml;nevera
 Sándwich de Chorizo con hogao;Pan artesanal sándwich;1;unidad;estanteria
-Sándwich de Chorizo con hogao;Hogao con chorizo;120;g;nevera
+Sándwich de Chorizo con hogao;Hogao;120;g;nevera
 Sándwich de Chorizo con hogao;Queso doble crema;1;unidad;nevera
 Sándwich de Chorizo con hogao;Tomate;37,5;g;estanteria
 Sándwich de Chorizo con hogao;Lechuga;1;unidad;nevera

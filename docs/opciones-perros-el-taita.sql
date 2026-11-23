@@ -1,6 +1,6 @@
 -- Opciones de los perros con carne a escoger (El Taita).
 -- CORRER DESPUÉS de: 1) la migración "product_option_choices", 2) importar el menú, 3) tener cargados los insumos
--- (Res mechada, Pollo desmechado, Champiñones, Hogao con chorizo, Tomate, Cebolla blanca).
+-- (Res mechada, Pollo desmechado, Champiñones, Hogao, Tomate, Cebolla blanca).
 -- Se puede correr varias veces: reemplaza las opciones y las cantidades.
 DO $$
 DECLARE
@@ -19,7 +19,7 @@ BEGIN
     ('Carne con guiso',      'Cebolla blanca',   0.25),
     ('Pollo con champiñones','Pollo desmechado', 30),
     ('Pollo con champiñones','Champiñones',      30),
-    ('Chorizo con hogao',    'Hogao con chorizo',60)
+    ('Chorizo con hogao',    'Hogao',60)
   ) AS t(choice_name, item_name, qty)
   LOOP
     SELECT id INTO v_item FROM public.nexora_inventory_items WHERE lower(btrim(name)) = lower(btrim(r.item_name));
@@ -50,7 +50,7 @@ BEGIN
     ('Carne con guiso',      'Cebolla blanca',   0.25),
     ('Pollo con champiñones','Pollo desmechado', 30),
     ('Pollo con champiñones','Champiñones',      30),
-    ('Chorizo con hogao',    'Hogao con chorizo',60)
+    ('Chorizo con hogao',    'Hogao',60)
   ) AS t(choice_name, item_name, qty)
   LOOP
     INSERT INTO public.nexora_option_choice_lines (choice_id, item_id, quantity)
@@ -59,10 +59,13 @@ BEGIN
     WHERE lower(oc.name) = lower(r.choice_name) AND lower(btrim(i.name)) = lower(btrim(r.item_name));
   END LOOP;
 
-  -- Perro con una carne: escoge 1 (res mechada sola o con guiso)
+  -- Perro con una carne = perro con hogao: lleva siempre 60 g de Hogao en su receta y NO se escoge carne.
+  SELECT id INTO v_prod FROM public.nexora_products WHERE lower(btrim(name)) = 'perro con una carne' ORDER BY is_active DESC LIMIT 1;
+  DELETE FROM public.nexora_product_option_choices WHERE product_id = v_prod;
+  DELETE FROM public.nexora_product_options WHERE product_id = v_prod;
+
   -- Perro con dos carnes: escoge 2 (se puede repetir)
-  FOR l IN SELECT * FROM (VALUES ('Perro con una carne', 1, ARRAY['Res mechada','Carne con guiso']),
-                                 ('Perro con dos carnes', 2, ARRAY['Res mechada','Carne con guiso','Pollo con champiñones','Chorizo con hogao'])) AS t(pname, picks, choices)
+  FOR l IN SELECT * FROM (VALUES ('Perro con dos carnes', 2, ARRAY['Res mechada','Carne con guiso','Pollo con champiñones','Chorizo con hogao'])) AS t(pname, picks, choices)
   LOOP
     SELECT id INTO v_prod FROM public.nexora_products WHERE lower(btrim(name)) = lower(l.pname) ORDER BY is_active DESC LIMIT 1;
     INSERT INTO public.nexora_product_options (product_id, picks) VALUES (v_prod, l.picks)
