@@ -323,7 +323,7 @@ function App() {
           <NavButton icon={<Users size={17} />} label="Clientes" active={false} onClick={() => setView('inicio')} />
           <p className="nav-label">Administración</p>
           {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<Users size={17} />} label="Equipo" active={view === 'equipo'} onClick={() => setView('equipo')} />}
-          <NavButton icon={<Clock3 size={17} />} label="Horas" active={view === 'horas'} onClick={() => setView('horas')} />
+          {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<Clock3 size={17} />} label="Horas" active={view === 'horas'} onClick={() => setView('horas')} />}
           <NavButton icon={<WalletCards size={17} />} label="Compras y gastos" active={false} onClick={() => setView('inicio')} />
           <NavButton icon={<BarChart3 size={17} />} label="Reportes" active={false} onClick={() => setView('inicio')} />
           <NavButton icon={<Users size={17} />} label="Mi perfil" active={view === 'perfil'} onClick={() => setView('perfil')} />
@@ -349,7 +349,7 @@ function App() {
         {importOpen && <InventoryImportDialog onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); setView('inventario'); }} />}
         {menuImportOpen && profile && MANAGING_ROLES.includes(profile.role) && <MenuImportExportDialog onClose={() => setMenuImportOpen(false)} onImported={() => void loadCatalog()} />}
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}
-        {view === 'horas' && <HoursView isManager={Boolean(profile && MANAGING_ROLES.includes(profile.role))} tracking={tracking} />}
+        {view === 'horas' && profile && MANAGING_ROLES.includes(profile.role) && <HoursView tracking={tracking} />}
         {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} onSignOut={signOutNow} />}
         <OfflineStatusBar online={online} sales={offlineSales.sales} syncing={offlineSales.syncing} onSync={() => void offlineSales.syncNow()} onDiscard={(clientId: string) => { removeSale(clientId); offlineSales.refresh(); }} />
         {dataError && <div className="data-notice" role="alert">{dataError}</div>}

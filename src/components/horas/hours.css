@@ -49,3 +49,28 @@
 .hours-devices .info { flex: 1; min-width: 160px; }
 .hours-devices .info small { display: block; color: #68756d; }
 .hours-devices .off { color: #8a968e; text-decoration: line-through; }
+
+.hours-week { margin: 0 0 14px; padding: 10px 12px; border: 1px solid #edf1ec; border-radius: 12px; }
+.hours-week-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; }
+.hours-week-head strong { flex: 1; min-width: 150px; color: #27312d; }
+.pay-status { padding: 2px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.pay-status.paid { color: #1f4a2b; background: #eaf4ec; }
+.pay-status.partial { color: #5a4313; background: #fff1cf; }
+.pay-status.pending { color: #7a2418; background: #fdecea; }
+.hours-day.is-paid { border-left-color: #8cc79b; }
+.hours-session .paid-mark { color: #1f4a2b; font-size: .72rem; font-weight: 700; }
+.hours-session .unpaid-mark { color: #7a2418; font-size: .72rem; font-weight: 700; }
+.hours-rate { padding: 3px 10px; border: 1px dashed #c4ccc6; border-radius: 999px; background: #fff; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; }
+.hours-rate.missing { color: #7a2418; border-color: #f2c4bd; background: #fdecea; }
+.hours-person-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.hours-pending-box { margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; color: #7a2418; background: #fdecea; font-size: .85rem; line-height: 1.45; }
+.hours-payments { list-style: none; margin: 0; padding: 0; }
+.hours-payments li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid #edf1ec; }
+.hours-payments li:first-child { border-top: 0; }
+.hours-payments .info { flex: 1; min-width: 220px; }
+.hours-payments .info small { display: block; color: #68756d; line-height: 1.4; }
+.hours-payments .amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.hours-payments .voided { opacity: .55; }
+.hours-payments .voided .amount { text-decoration: line-through; }
+.hours-preview { padding: 10px 12px; border-radius: 10px; color: #27312d; background: #f6f8f5; font-size: .88rem; line-height: 1.45; }
+.hours-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

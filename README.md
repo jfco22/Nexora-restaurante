@@ -134,7 +134,7 @@ Código: `src/lib/offline/` (almacén, sincronización, conectividad) y `src/com
 Cuenta las horas y minutos de cada persona **solo cuando entra desde un equipo asignado al restaurante** (la tablet o el PC de la caja). Menú **Horas**.
 
 **Puesta en marcha (una sola vez):**
-1. En Supabase, SQL Editor: correr `supabase/migrations/20261124000000_add_nexora_work_time.sql`.
+1. En Supabase, SQL Editor: correr, en este orden, `supabase/migrations/20261124000000_add_nexora_work_time.sql` y `supabase/migrations/20261125000000_add_nexora_work_payments.sql`.
 2. En la tablet/PC del restaurante, entrar como **propietario o gerente** → **Horas** → *Asignar este equipo* (ponerle nombre, ej. "Caja principal"). Se guarda un código secreto en ese navegador; en la base solo queda su huella.
 3. Repetir en cada equipo (cocina, otra caja…). Para que funcione como app, instalarla (ver "Sin internet").
 
@@ -142,8 +142,16 @@ Cuenta las horas y minutos de cada persona **solo cuando entra desde un equipo a
 - Cajero, mesero, cocina e inventario **solo pueden usar la app desde un equipo asignado**; desde cualquier otro sitio ven "Este equipo no está autorizado". Propietario, gerente, marketing y auditor pueden entrar desde cualquier lugar (sus horas solo cuentan en equipos asignados). Roles en `DEVICE_REQUIRED_ROLES` (`src/lib/workTime.ts`).
 - El turno **empieza solo** al entrar desde un equipo asignado y la app manda una señal cada minuto. Termina al **cerrar sesión** (Mi perfil). Si la señal se pierde más de 5 minutos, el turno se cierra a la hora de la última señal; si solo se cayó el internet con la app abierta, el turno continúa (máximo 6 h).
 - Solo un turno abierto por persona: si entra desde otro equipo, el anterior se cierra.
-- Cada persona ve sus horas; propietario y gerente ven las de todos, por día, semana, mes o fechas elegidas.
+- El personal **no ve ni maneja turnos**: las horas corren solas desde el login. El menú **Horas** es solo del propietario y gerentes, con filtros hoy / semana / mes / entre dos fechas.
 - Propietario y gerente pueden **corregir** o **agregar** un turno (motivo obligatorio; queda registrado quién y por qué). Un equipo perdido se **desactiva** en Horas y deja de funcionar al instante.
 - Las horas y días se calculan en hora de Colombia.
 
 **Límite honesto:** el bloqueo de equipos no autorizados lo aplica la app; la base de datos solo cuenta horas desde equipos asignados. No es una barrera contra alguien técnico que hable directo con la API; para eso se necesitaría exigir el código del equipo en cada consulta (se puede agregar después).
+
+### Pago de horas
+- En **Horas**, cada persona tiene su **valor por hora** (botón junto a su nombre). Cada semana (lunes a domingo) aparece como **Pagada**, **Pago parcial** o **Sin pagar**, y cada día y turno muestra si ya se pagó.
+- **Pagar semana** o **Pagar entre fechas…** genera un pago: horas × valor por hora, con forma de pago (efectivo, transferencia, otro) y nota. Se pagan solo los turnos **terminados y sin pagar** del rango; los turnos en curso quedan pendientes. Nada se paga dos veces.
+- El valor por hora usado queda guardado en cada pago: cambiarlo después no altera los pagos ya hechos.
+- **Pagos realizados** muestra el historial con quién pagó y cuándo. Un pago equivocado se **anula** (con motivo): las horas vuelven a quedar sin pagar y el pago queda como anulado, no se borra.
+- Un turno ya pagado no se puede corregir: primero se anula el pago.
+- Hoy el pago queda registrado en el sistema; no se descuenta automáticamente de la caja ni de los gastos.

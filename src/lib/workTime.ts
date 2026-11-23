@@ -54,10 +54,24 @@ export type WorkRow = {
   is_live: boolean;
   adjusted: boolean;
   adjust_note: string | null;
+  paid: boolean;
+  payment_id: string | null;
+  hourly_rate_cop: number;
 };
 
-export type DaySummary = { date: string; minutes: number; sessions: WorkRow[] };
-export type PersonSummary = { userId: string; name: string; role: string; totalMinutes: number; live: boolean; days: DaySummary[] };
+export type DaySummary = { date: string; minutes: number; paidMinutes: number; sessions: WorkRow[] };
+export type PayStatus = 'paid' | 'partial' | 'pending';
+export type WeekSummary = { start: string; end: string; minutes: number; paidMinutes: number; payableMinutes: number; status: PayStatus; days: DaySummary[] };
+export type PersonSummary = {
+  userId: string; name: string; role: string; rate: number;
+  totalMinutes: number; paidMinutes: number;
+  /** Minutos sin pagar que ya se pueden pagar (turnos terminados). */
+  payableMinutes: number;
+  live: boolean; weeks: WeekSummary[];
+};
+
+/** Monto de pagar unos minutos a un valor por hora, redondeado al peso (igual que la base de datos). */
+export const paymentAmount = (minutes: number, hourlyRate: number): number => Math.round((minutes * hourlyRate) / 60);
 
 /** "3 h 05 min", "45 min", "0 min". */
 export function formatMinutes(total: number): string {
@@ -105,32 +119,73 @@ export function fromInputValue(value: string): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-/** Agrupa los turnos por persona y por día (hora de Colombia). Personas ordenadas por total de horas; días del más reciente al más antiguo. */
+/** Estado de pago según los minutos pagados de un total. */
+export function payStatus(paidMinutes: number, minutes: number): PayStatus {
+  if (minutes > 0 && paidMinutes >= minutes) return 'paid';
+  return paidMinutes > 0 ? 'partial' : 'pending';
+}
+
+/**
+ * Agrupa los turnos por persona, semana (lunes a domingo) y día, en hora de Colombia.
+ * Personas ordenadas por horas pendientes de pago y luego por total; semanas y días del más reciente al más antiguo.
+ */
 export function groupReport(rows: WorkRow[]): PersonSummary[] {
   const people = new Map<string, PersonSummary>();
   for (const row of rows) {
     let person = people.get(row.user_id);
     if (!person) {
-      person = { userId: row.user_id, name: row.display_name, role: row.role, totalMinutes: 0, live: false, days: [] };
+      person = { userId: row.user_id, name: row.display_name, role: row.role, rate: row.hourly_rate_cop, totalMinutes: 0, paidMinutes: 0, payableMinutes: 0, live: false, weeks: [] };
       people.set(row.user_id, person);
     }
     person.totalMinutes += row.minutes;
+    if (row.paid) person.paidMinutes += row.minutes;
+    else if (!row.is_live) person.payableMinutes += row.minutes;
     person.live = person.live || row.is_live;
+
     const date = bogotaDate(row.started_at);
-    let day = person.days.find((item: DaySummary) => item.date === date);
+    const weekStart = startOfWeek(date);
+    let week = person.weeks.find((item: WeekSummary) => item.start === weekStart);
+    if (!week) {
+      week = { start: weekStart, end: shiftDate(weekStart, 6), minutes: 0, paidMinutes: 0, payableMinutes: 0, status: 'pending', days: [] };
+      person.weeks.push(week);
+    }
+    week.minutes += row.minutes;
+    if (row.paid) week.paidMinutes += row.minutes;
+    else if (!row.is_live) week.payableMinutes += row.minutes;
+
+    let day = week.days.find((item: DaySummary) => item.date === date);
     if (!day) {
-      day = { date, minutes: 0, sessions: [] };
-      person.days.push(day);
+      day = { date, minutes: 0, paidMinutes: 0, sessions: [] };
+      week.days.push(day);
     }
     day.minutes += row.minutes;
+    if (row.paid) day.paidMinutes += row.minutes;
     day.sessions.push(row);
   }
   const result = [...people.values()];
   for (const person of result) {
-    person.days.sort((a: DaySummary, b: DaySummary) => b.date.localeCompare(a.date));
-    for (const day of person.days) day.sessions.sort((a: WorkRow, b: WorkRow) => a.started_at.localeCompare(b.started_at));
+    person.weeks.sort((a: WeekSummary, b: WeekSummary) => b.start.localeCompare(a.start));
+    for (const week of person.weeks) {
+      week.status = payStatus(week.paidMinutes, week.minutes);
+      week.days.sort((a: DaySummary, b: DaySummary) => b.date.localeCompare(a.date));
+      for (const day of week.days) day.sessions.sort((a: WorkRow, b: WorkRow) => a.started_at.localeCompare(b.started_at));
+    }
   }
-  return result.sort((a: PersonSummary, b: PersonSummary) => b.totalMinutes - a.totalMinutes || a.name.localeCompare(b.name));
+  return result.sort((a: PersonSummary, b: PersonSummary) => b.payableMinutes - a.payableMinutes || b.totalMinutes - a.totalMinutes || a.name.localeCompare(b.name));
+}
+
+/** Minutos que se pagarían a una persona entre dos fechas (AAAA-MM-DD) según los turnos cargados: sin pagar y terminados. */
+export function payablePreview(rows: WorkRow[], userId: string, from: string, to: string): { minutes: number; sessions: number } {
+  let minutes = 0;
+  let sessions = 0;
+  for (const row of rows) {
+    if (row.user_id !== userId || row.paid || row.is_live) continue;
+    const date = bogotaDate(row.started_at);
+    if (date < from || date > to) continue;
+    minutes += row.minutes;
+    sessions += 1;
+  }
+  return { minutes, sessions };
 }
 
 /** Problema de un turno escrito a mano, o null si está bien. */

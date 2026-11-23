@@ -85,3 +85,37 @@ export async function addWorkSession(userId: string, startIso: string, endIso: s
   const { error } = await supabase.rpc('add_nexora_work_session', { user_id_input: userId, started_at_input: startIso, ended_at_input: endIso, note_input: note });
   return failure(error);
 }
+
+export type PayMethod = 'efectivo' | 'transferencia' | 'otro';
+export const payMethodLabels: Record<PayMethod, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', otro: 'Otro' };
+
+export type PaymentRecord = {
+  payment_id: string; user_id: string; display_name: string; from_date: string; to_date: string; minutes: number;
+  hourly_rate_cop: number; amount_cop: number; method: PayMethod; note: string | null; paid_at: string;
+  paid_by_name: string; voided_at: string | null; void_reason: string | null;
+};
+
+export async function setWorkRate(userId: string, rate: number): Promise<Failure> {
+  const { error } = await supabase.rpc('set_nexora_work_rate', { user_id_input: userId, rate_input: rate });
+  return failure(error);
+}
+
+export async function payWorkHours(userId: string, from: string, to: string, method: PayMethod, note: string, rate: number | null): Promise<{ minutes: number; amount: number; error: Failure }> {
+  const { data, error } = await supabase.rpc('pay_nexora_work_hours', {
+    user_id_input: userId, from_date_input: from, to_date_input: to, method_input: method, note_input: note || null, rate_input: rate,
+  });
+  const row = Array.isArray(data) ? (data[0] as { minutes: number; amount_cop: number } | undefined) : undefined;
+  if (error || !row) return { minutes: 0, amount: 0, error: failure(error) ?? 'No se pudo generar el pago.' };
+  return { minutes: row.minutes, amount: row.amount_cop, error: null };
+}
+
+export async function listWorkPayments(from: string, to: string): Promise<{ payments: PaymentRecord[]; error: Failure }> {
+  const { data, error } = await supabase.rpc('list_nexora_work_payments', { range_from: from, range_to: to, user_filter: null });
+  if (error || !Array.isArray(data)) return { payments: [], error: failure(error) ?? 'No pudimos cargar los pagos.' };
+  return { payments: data as PaymentRecord[], error: null };
+}
+
+export async function voidWorkPayment(paymentId: string, reason: string): Promise<Failure> {
+  const { error } = await supabase.rpc('void_nexora_work_payment', { payment_id_input: paymentId, reason_input: reason });
+  return failure(error);
+}
