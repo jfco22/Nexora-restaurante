@@ -1,7 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabase';
+import { fetchInventory } from '@/lib/inventory';
+import { SimilarItemsPanel } from '@/components/inventory/SimilarItemsPanel';
+import { findSimilarNames, findUnitDifferences, normalizeKey, pendingDecisions, resolveName, type KnownItem, type NameDecision, type NameEntry } from '@/lib/similarItems';
 
 type ImportRow = {
   name: string;
@@ -132,8 +135,36 @@ export function InventoryImportDialog({ onClose, onImported }: InventoryImportDi
   const [result, setResult] = useState<ImportResult | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const validRows = rows.filter((row: ImportRow) => row._errors.length === 0);
-  const errorRows = rows.filter((row: ImportRow) => row._errors.length > 0);
+  const [known, setKnown] = useState<KnownItem[]>([]);
+  const [decisions, setDecisions] = useState<Record<string, NameDecision>>({});
+  const [unitDecisions, setUnitDecisions] = useState<Record<string, 'apply' | 'skip'>>({});
+
+  useEffect(() => {
+    void fetchInventory().then((inventory) => {
+      setKnown([...inventory.items, ...inventory.archivedItems].map((item) => ({ id: item.id, name: item.name, unit: item.unit, archived: !item.is_active })));
+    });
+  }, []);
+
+  const entries: NameEntry[] = useMemo(
+    () => rows.filter((row: ImportRow) => row.name !== '').map((row: ImportRow, index: number) => ({ name: row.name, unit: VALID_UNITS.includes(row.unit) ? row.unit : null, rowNumber: index + 2 })),
+    [rows],
+  );
+  const hits = useMemo(() => findSimilarNames(entries, known), [entries, known]);
+  const unitDifferences = useMemo(
+    () => findUnitDifferences(entries.map((entry: NameEntry) => ({ ...entry, name: resolveName(entry.name, decisions, known) })), known),
+    [entries, decisions, known],
+  );
+  const pending = pendingDecisions(hits, decisions) + unitDifferences.filter((diff) => unitDecisions[diff.key] === undefined).length;
+  // Nombre ya resuelto (si "es el mismo", se usa el nombre del insumo existente) y sin las filas que se decidió omitir.
+  const effectiveRows = useMemo(() => {
+    const skipped = new Set(unitDifferences.filter((diff) => unitDecisions[diff.key] === 'skip').map((diff) => diff.key));
+    return rows
+      .map((row: ImportRow) => ({ ...row, name: resolveName(row.name, decisions, known) }))
+      .filter((row: ImportRow) => !skipped.has(normalizeKey(row.name)));
+  }, [rows, decisions, known, unitDifferences, unitDecisions]);
+
+  const validRows = effectiveRows.filter((row: ImportRow) => row._errors.length === 0);
+  const errorRows = effectiveRows.filter((row: ImportRow) => row._errors.length > 0);
 
   const handleFile = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
     const file = event.target.files?.[0];
@@ -141,6 +172,8 @@ export function InventoryImportDialog({ onClose, onImported }: InventoryImportDi
     setParseError(null);
     setResult(null);
     setServerError(null);
+    setDecisions({});
+    setUnitDecisions({});
     setFileName(file.name);
 
     const reader = new FileReader();
@@ -269,13 +302,22 @@ export function InventoryImportDialog({ onClose, onImported }: InventoryImportDi
           <div className="import-preview">
             <h3>Vista previa ({rows.length} filas)</h3>
             <p className="muted">{validRows.length} listas para importar{errorRows.length > 0 ? `, ${errorRows.length} con errores` : ''}.</p>
+            <SimilarItemsPanel
+              hits={hits}
+              decisions={decisions}
+              onDecide={(key: string, decision: NameDecision) => setDecisions((current: Record<string, NameDecision>) => ({ ...current, [key]: decision }))}
+              unitDifferences={unitDifferences}
+              unitDecisions={unitDecisions}
+              onUnitDecide={(key: string, decision: 'apply' | 'skip') => setUnitDecisions((current) => ({ ...current, [key]: decision }))}
+              disabled={busy}
+            />
             <div className="import-preview-scroll">
               <table className="import-preview-table">
                 <thead>
                   <tr><th>Nombre</th><th>Unidad</th><th>Ubicación</th><th>Stock</th><th>Mín</th><th>Costo</th><th>Estado</th></tr>
                 </thead>
                 <tbody>
-                  {rows.map((row, index) => (
+                  {effectiveRows.map((row, index) => (
                     <tr key={index} className={row._errors.length > 0 ? 'row-error' : 'row-ok'}>
                       <td>{row.name || '—'}</td>
                       <td>{row.unit}</td>
@@ -295,8 +337,8 @@ export function InventoryImportDialog({ onClose, onImported }: InventoryImportDi
         <div className="team-dialog-actions">
           <button className="outline-button" type="button" onClick={onClose} disabled={busy}>Cerrar</button>
           {validRows.length > 0 && !result && (
-            <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy}>
-              <Upload size={16} />{busy ? 'Importando...' : `Importar ${validRows.length} insumos`}
+            <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy || pending > 0} title={pending > 0 ? `Decide primero los ${pending} avisos` : undefined}>
+              <Upload size={16} />{busy ? 'Importando...' : pending > 0 ? `Decide ${pending} avisos` : `Importar ${validRows.length} insumos`}
             </button>
           )}
         </div>

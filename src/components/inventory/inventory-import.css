@@ -82,3 +82,15 @@
 .import-check { display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 12px; font-size: .85rem; color: #27312d; cursor: pointer; }
 
 .import-check input { margin-top: 3px; }
+
+.similar-panel { margin: 12px 0; padding: 12px; border: 1px solid #e0b24a; background: #fff8e6; border-radius: 8px; display: grid; gap: 10px; }
+.similar-panel h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 0.95rem; }
+.similar-item { border: 1px solid #e6d3a0; border-radius: 6px; padding: 8px 10px; margin: 0; background: #fff; display: grid; gap: 6px; }
+.similar-item.pending { border-color: #d98a00; }
+.similar-item.done { border-color: #4f9d69; }
+.similar-item legend { font-weight: 600; padding: 0 4px; }
+.similar-item legend small { font-weight: 400; color: #6b6b6b; }
+.similar-option { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; cursor: pointer; }
+.similar-unit-warning { color: #a35a00; font-style: normal; }
+.similar-units { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 0.9rem; }
+.similar-unit-choice { display: grid; gap: 4px; margin-top: 4px; }

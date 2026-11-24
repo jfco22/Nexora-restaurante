@@ -5,6 +5,8 @@ import { csvToObjects, decodeCsvBytes, downloadCsv, toCsv } from '@/lib/importPa
 import { fetchCatalogForRecipes, fetchInventory, type CatalogProduct, type InventoryItem, type RecipeLine } from '@/lib/inventory';
 import { RECIPE_HEADERS, buildRecipePlan, parseRecipeRecords, type PlanLine, type RecipePlan, type RecipeRow } from '@/lib/recipeImport';
 import { applyRecipePlan, type RecipeImportOutcome } from '@/lib/recipeImportApi';
+import { SimilarItemsPanel } from '@/components/inventory/SimilarItemsPanel';
+import { findSimilarNames, findUnitDifferences, pendingDecisions, resolveName, type KnownItem, type NameDecision, type NameEntry } from '@/lib/similarItems';
 import '@/components/inventory/inventory-import.css';
 import '@/components/inventory/menu-import.css';
 
@@ -29,6 +31,7 @@ export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogPr
   const [replace, setReplace] = useState(true);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<RecipeImportOutcome | null>(null);
+  const [decisions, setDecisions] = useState<Record<string, NameDecision>>({});
 
   const loadReference = useCallback(async (): Promise<void> => {
     const [catalog, inventory] = await Promise.all([fetchCatalogForRecipes(), fetchInventory()]);
@@ -42,9 +45,28 @@ export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogPr
     void loadReference();
   }, [loadReference]);
 
+  const known: KnownItem[] = useMemo(
+    () => items.map((item: InventoryItem) => ({ id: item.id, name: item.name, unit: item.unit, archived: !item.is_active })),
+    [items],
+  );
+  const entries: NameEntry[] = useMemo(
+    () => rows.filter((row: RecipeRow) => row.item !== '').map((row: RecipeRow) => ({ name: row.item, unit: row.unit, rowNumber: row.rowNumber })),
+    [rows],
+  );
+  const hits = useMemo(() => findSimilarNames(entries, known), [entries, known]);
+  const unitDifferences = useMemo(
+    () => findUnitDifferences(entries.map((entry: NameEntry) => ({ ...entry, name: resolveName(entry.name, decisions, known) })), known),
+    [entries, decisions, known],
+  );
+  const pending = pendingDecisions(hits, decisions);
+  const effectiveRows = useMemo(
+    () => rows.map((row: RecipeRow) => ({ ...row, item: resolveName(row.item, decisions, known) })),
+    [rows, decisions, known],
+  );
+
   const plan: RecipePlan = useMemo(
-    () => buildRecipePlan(rows, products, items.map((item: InventoryItem) => ({ id: item.id, name: item.name, unit: item.unit }))),
-    [rows, products, items],
+    () => buildRecipePlan(effectiveRows, products, items.map((item: InventoryItem) => ({ id: item.id, name: item.name, unit: item.unit }))),
+    [effectiveRows, products, items],
   );
   const validLines = plan.lines.filter((line: PlanLine) => line.errors.length === 0);
   const errorLines = plan.lines.length - validLines.length;
@@ -59,6 +81,7 @@ export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogPr
     setFileName(file.name);
     setParseError(null);
     setOutcome(null);
+    setDecisions({});
     const reader = new FileReader();
     reader.onload = (loadEvent: ProgressEvent<FileReader>) => {
       try {
@@ -179,6 +202,13 @@ export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogPr
               {validLines.length} listas para importar en {productsInFile} productos{errorLines > 0 ? `, ${errorLines} con errores (se omiten)` : ''}.
               {plan.newItems.length > 0 ? ` Se crearán ${plan.newItems.length} insumos nuevos con stock 0.` : ''}
             </p>
+            <SimilarItemsPanel
+              hits={hits}
+              decisions={decisions}
+              onDecide={(key: string, decision: NameDecision) => setDecisions((current: Record<string, NameDecision>) => ({ ...current, [key]: decision }))}
+              unitDifferences={unitDifferences}
+              disabled={busy}
+            />
             <label className="import-check">
               <input type="checkbox" checked={replace} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setReplace(event.target.checked)} disabled={busy} />
               <span>Quitar de cada plato los insumos que no estén en el archivo{willReplace > 0 ? ` (${willReplace} platos ya tienen receta)` : ''}</span>
@@ -204,8 +234,8 @@ export function RecipeImportDialog({ onClose, onImported }: RecipeImportDialogPr
         <div className="team-dialog-actions">
           <button className="outline-button" type="button" onClick={onClose} disabled={busy}>Cerrar</button>
           {validLines.length > 0 && !outcome && (
-            <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy}>
-              <Upload size={16} />{busy ? 'Importando...' : `Importar ${validLines.length} líneas`}
+            <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy || pending > 0} title={pending > 0 ? `Decide primero los ${pending} insumos parecidos` : undefined}>
+              <Upload size={16} />{busy ? 'Importando...' : pending > 0 ? `Decide ${pending} insumos parecidos` : `Importar ${validLines.length} líneas`}
             </button>
           )}
         </div>

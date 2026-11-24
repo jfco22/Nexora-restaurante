@@ -7,6 +7,8 @@ import { fetchPreparations, type Preparation } from '@/lib/preparations';
 import { PREPARATION_HEADERS, buildPreparationPlan, parsePreparationRecords, type ParsedPreparations, type PlannedPreparation } from '@/lib/preparationImport';
 import { applyPreparationPlan, type PreparationImportOutcome } from '@/lib/preparationImportApi';
 import { storageLabels } from '@/lib/inventory';
+import { SimilarItemsPanel } from '@/components/inventory/SimilarItemsPanel';
+import { findSimilarNames, findUnitDifferences, pendingDecisions, resolveName, type KnownItem, type NameDecision, type NameEntry } from '@/lib/similarItems';
 import '@/components/inventory/inventory-import.css';
 import '@/components/inventory/menu-import.css';
 
@@ -29,6 +31,7 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
   const [parseError, setParseError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<PreparationImportOutcome | null>(null);
+  const [decisions, setDecisions] = useState<Record<string, NameDecision>>({});
 
   const loadReference = useCallback(async (): Promise<void> => {
     const [inventory, preps] = await Promise.all([fetchInventory(), fetchPreparations()]);
@@ -41,9 +44,35 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
     void loadReference();
   }, [loadReference]);
 
+  const known: KnownItem[] = useMemo(
+    () => items.map((item: InventoryItem) => ({ id: item.id, name: item.name, unit: item.unit, archived: !item.is_active })),
+    [items],
+  );
+  const entries: NameEntry[] = useMemo(
+    () => (parsed ? [
+      ...parsed.rows.filter((row) => row.item !== '').map((row) => ({ name: row.item, unit: row.unit, rowNumber: row.rowNumber })),
+      ...parsed.extras.filter((extra) => extra.item !== '').map((extra) => ({ name: extra.item, unit: extra.unit, rowNumber: extra.rowNumber })),
+    ] : []),
+    [parsed],
+  );
+  const hits = useMemo(() => findSimilarNames(entries, known), [entries, known]);
+  const unitDifferences = useMemo(
+    () => findUnitDifferences(entries.map((entry: NameEntry) => ({ ...entry, name: resolveName(entry.name, decisions, known) })), known),
+    [entries, decisions, known],
+  );
+  const pending = pendingDecisions(hits, decisions);
+  const effective = useMemo(
+    () => (parsed ? {
+      ...parsed,
+      rows: parsed.rows.map((row) => ({ ...row, item: resolveName(row.item, decisions, known) })),
+      extras: parsed.extras.map((extra) => ({ ...extra, item: resolveName(extra.item, decisions, known) })),
+    } : null),
+    [parsed, decisions, known],
+  );
+
   const plan = useMemo(
-    () => (parsed ? buildPreparationPlan(parsed, items.map((item: InventoryItem) => ({ id: item.id, name: item.name, unit: item.unit }))) : null),
-    [parsed, items],
+    () => (effective ? buildPreparationPlan(effective, items.map((item: InventoryItem) => ({ id: item.id, name: item.name, unit: item.unit }))) : null),
+    [effective, items],
   );
 
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -53,6 +82,7 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
     setFileName(file.name);
     setParseError(null);
     setOutcome(null);
+    setDecisions({});
     const reader = new FileReader();
     reader.onload = (loadEvent: ProgressEvent<FileReader>) => {
       try {
@@ -192,6 +222,13 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
             {plan.rejected.map((entry) => (
               <p key={entry.name} className="auth-feedback error" role="alert"><strong>{entry.name}:</strong> {entry.reasons.join(' ')}</p>
             ))}
+            <SimilarItemsPanel
+              hits={hits}
+              decisions={decisions}
+              onDecide={(key: string, decision: NameDecision) => setDecisions((current: Record<string, NameDecision>) => ({ ...current, [key]: decision }))}
+              unitDifferences={unitDifferences}
+              disabled={busy}
+            />
             <div className="import-preview-scroll">
               <table className="import-preview-table">
                 <thead><tr><th>Preparación</th><th>Rinde por tanda</th><th>Insumos</th></tr></thead>
@@ -218,8 +255,8 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
         <div className="team-dialog-actions">
           <button className="outline-button" type="button" onClick={onClose} disabled={busy}>Cerrar</button>
           {plan && plan.preparations.length > 0 && !outcome && (
-            <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy}>
-              <Upload size={16} />{busy ? 'Importando...' : `Importar ${plan.preparations.length} preparaciones`}
+            <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy || pending > 0} title={pending > 0 ? `Decide primero los ${pending} insumos parecidos` : undefined}>
+              <Upload size={16} />{busy ? 'Importando...' : pending > 0 ? `Decide ${pending} insumos parecidos` : `Importar ${plan.preparations.length} preparaciones`}
             </button>
           )}
         </div>
