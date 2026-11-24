@@ -10,18 +10,20 @@ type SimilarItemsPanelProps = {
   unitDecisions?: Record<string, 'apply' | 'skip'>;
   onUnitDecide?: (key: string, decision: 'apply' | 'skip') => void;
   disabled?: boolean;
+  /** Qué se está comparando; por defecto insumos. */
+  noun?: string;
 };
 
 const unitLabel = (unit: string): string => (unit === 'unidad' ? 'unidades' : unit);
 
-export function SimilarItemsPanel({ hits, decisions, onDecide, unitDifferences, unitDecisions, onUnitDecide, disabled }: SimilarItemsPanelProps) {
+export function SimilarItemsPanel({ hits, decisions, onDecide, unitDifferences, unitDecisions, onUnitDecide, disabled, noun = 'insumos' }: SimilarItemsPanelProps) {
   if (hits.length === 0 && unitDifferences.length === 0) return null;
   return (
     <div className="similar-panel">
       {hits.length > 0 && (
         <>
-          <h3><AlertTriangle size={16} /> Insumos que se parecen a otros que ya tienes</h3>
-          <p className="muted">Decide en cada uno si es el mismo insumo (así no se duplica y se mantiene su stock) o si es distinto y se crea nuevo.</p>
+          <h3><AlertTriangle size={16} /> {noun.charAt(0).toUpperCase() + noun.slice(1)} que se parecen a otros que ya tienes</h3>
+          <p className="muted">Decide en cada uno si es el mismo (así no se duplica y se actualiza el que ya existe) o si es distinto y se crea nuevo.</p>
           {hits.map((hit: SimilarHit) => (
             <fieldset key={hit.key} className={`similar-item ${decisions[hit.key] === undefined ? 'pending' : 'done'}`} disabled={disabled}>
               <legend>
@@ -31,14 +33,14 @@ export function SimilarItemsPanel({ hits, decisions, onDecide, unitDifferences, 
                 <label key={candidate.item.id} className="similar-option">
                   <input type="radio" name={`similar-${hit.key}`} checked={decisions[hit.key] === candidate.item.id} onChange={() => onDecide(hit.key, candidate.item.id)} />
                   <span>
-                    Es el mismo: usar «{candidate.item.name}» ({unitLabel(candidate.item.unit)}){candidate.item.archived ? ' · archivado, se reactiva' : ''}
+                    Es el mismo: usar «{candidate.item.name}»{candidate.item.unit ? ` (${unitLabel(candidate.item.unit)})` : ''}{candidate.item.archived ? ' · archivado, se reactiva' : ''}
                     {candidate.unitDiffers && <em className="similar-unit-warning"> · ojo: el archivo lo trae en {unitLabel(hit.unit ?? '')} y el insumo está en {unitLabel(candidate.item.unit)}</em>}
                   </span>
                 </label>
               ))}
               <label className="similar-option">
                 <input type="radio" name={`similar-${hit.key}`} checked={decisions[hit.key] === 'new'} onChange={() => onDecide(hit.key, 'new')} />
-                <span>Es distinto, crear «{hit.name}» como insumo nuevo</span>
+                <span>Es distinto, crear «{hit.name}» como nuevo</span>
               </label>
             </fieldset>
           ))}

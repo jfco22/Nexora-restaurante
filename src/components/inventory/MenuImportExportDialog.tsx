@@ -1,11 +1,13 @@
 import { NumberInput } from '@/components/NumberInput';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertTriangle, X, Trash2, Pencil, Save, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabase';
 import { userFacingError } from '@/lib/tableAccount';
 import { loadMenuImageList, resolveMenuImage } from '@/lib/menuImages';
 import { csvToObjects, decodeCsvBytes, downloadCsv, parsePriceCop, toCsv } from '@/lib/importParsing';
+import { SimilarItemsPanel } from '@/components/inventory/SimilarItemsPanel';
+import { findSimilarNames, normalizeKey, pendingDecisions, resolveName, type KnownItem, type NameDecision, type NameEntry } from '@/lib/similarItems';
 import '@/components/inventory/menu-import.css';
 
 type MenuRow = {
@@ -144,8 +146,50 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
   const [editProduct, setEditProduct] = useState<ExistingProduct | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const validRows = rows.filter((row: MenuRow) => row._errors.length === 0);
-  const errorRows = rows.filter((row: MenuRow) => row._errors.length > 0);
+  // Productos y categorías que ya existen (también los desactivados) para avisar de nombres parecidos.
+  const [knownProducts, setKnownProducts] = useState<KnownItem[]>([]);
+  const [knownCategories, setKnownCategories] = useState<KnownItem[]>([]);
+  const [productDecisions, setProductDecisions] = useState<Record<string, NameDecision>>({});
+  const [categoryDecisions, setCategoryDecisions] = useState<Record<string, NameDecision>>({});
+  const [similarEdit, setSimilarEdit] = useState<{ key: string; hit: ReturnType<typeof findSimilarNames>[number] } | null>(null);
+
+  const loadKnown = useCallback(async (): Promise<void> => {
+    const [productsResult, categoriesResult] = await Promise.all([
+      supabase.from('nexora_products').select('id, name, is_active'),
+      supabase.from('nexora_categories').select('id, name, is_active'),
+    ]);
+    const toKnown = (data: { id: string; name: string; is_active: boolean }[] | null): KnownItem[] =>
+      (data ?? []).map((entry) => ({ id: entry.id, name: entry.name, unit: '', archived: !entry.is_active }));
+    if (!productsResult.error) setKnownProducts(toKnown(productsResult.data));
+    if (!categoriesResult.error) setKnownCategories(toKnown(categoriesResult.data));
+  }, []);
+
+  useEffect(() => { void loadKnown(); }, [loadKnown]);
+
+  const productEntries: NameEntry[] = useMemo(
+    () => rows.map((row: MenuRow, index: number) => ({ name: row.name, unit: null, rowNumber: index + 2 })).filter((entry: NameEntry) => entry.name !== ''),
+    [rows],
+  );
+  const categoryEntries: NameEntry[] = useMemo(
+    () => rows.map((row: MenuRow, index: number) => ({ name: row.category, unit: null, rowNumber: index + 2 })).filter((entry: NameEntry) => entry.name !== ''),
+    [rows],
+  );
+  const productHits = useMemo(() => findSimilarNames(productEntries, knownProducts), [productEntries, knownProducts]);
+  const categoryHits = useMemo(() => findSimilarNames(categoryEntries, knownCategories), [categoryEntries, knownCategories]);
+  const pending = pendingDecisions(productHits, productDecisions) + pendingDecisions(categoryHits, categoryDecisions);
+
+  // Con "es el mismo", la fila usa el nombre existente y así actualiza ese producto/categoría en vez de crear otro.
+  const effectiveRows = useMemo(
+    () => rows.map((row: MenuRow): MenuRow => ({
+      ...row,
+      name: resolveName(row.name, productDecisions, knownProducts),
+      category: resolveName(row.category, categoryDecisions, knownCategories),
+    })),
+    [rows, productDecisions, categoryDecisions, knownProducts, knownCategories],
+  );
+
+  const validRows = effectiveRows.filter((row: MenuRow) => row._errors.length === 0);
+  const errorRows = effectiveRows.filter((row: MenuRow) => row._errors.length > 0);
 
   const loadProducts = useCallback(async (): Promise<void> => {
     const [productsResult, categoriesResult] = await Promise.all([
@@ -186,6 +230,8 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
     setParseError(null);
     setResult(null);
     setServerError(null);
+    setProductDecisions({});
+    setCategoryDecisions({});
     setFileName(file.name);
 
     const isCsv = /\.(csv|txt)$/i.test(file.name);
@@ -255,6 +301,7 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
 
     const res = data[0] as MenuImportResult;
     setResult(res);
+    void loadKnown();
     onImported();
   };
 
@@ -350,8 +397,26 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
   // CRUD on existing products
   const saveProduct = async (): Promise<void> => {
     if (!editingProductId || !editProduct) return;
-    setBusy(true);
     setProductError(null);
+
+    // Nombre cambiado: que no sea igual ni parecido a otro producto.
+    const original = products.find((entry: ExistingProduct) => entry.id === editingProductId);
+    const key = normalizeKey(editProduct.name);
+    if (original && key !== normalizeKey(original.name)) {
+      const others = knownProducts.filter((entry: KnownItem) => entry.id !== editingProductId);
+      const exact = others.find((entry: KnownItem) => normalizeKey(entry.name) === key);
+      if (exact) {
+        setProductError(`Ya existe un producto llamado «${exact.name}»${exact.archived ? ' (desactivado)' : ''}. Usa otro nombre o edita ese.`);
+        return;
+      }
+      const hit = findSimilarNames([{ name: editProduct.name, unit: null, rowNumber: 1 }], others)[0];
+      if (hit && similarEdit?.key !== key) {
+        setSimilarEdit({ key, hit });
+        return;
+      }
+    }
+    setSimilarEdit(null);
+    setBusy(true);
 
     const { data: catData } = await supabase
       .from('nexora_categories')
@@ -397,6 +462,7 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
     setEditingProductId(null);
     setEditProduct(null);
     void loadProducts();
+    void loadKnown();
     onImported();
   };
 
@@ -510,13 +576,29 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
                   </div>
                   <button className="outline-button" type="button" onClick={addRow} disabled={busy}><Plus size={15} /> Agregar fila</button>
                 </div>
+                <SimilarItemsPanel
+                  noun="productos"
+                  hits={productHits}
+                  decisions={productDecisions}
+                  onDecide={(key: string, decision: NameDecision) => setProductDecisions((current: Record<string, NameDecision>) => ({ ...current, [key]: decision }))}
+                  unitDifferences={[]}
+                  disabled={busy}
+                />
+                <SimilarItemsPanel
+                  noun="categorías"
+                  hits={categoryHits}
+                  decisions={categoryDecisions}
+                  onDecide={(key: string, decision: NameDecision) => setCategoryDecisions((current: Record<string, NameDecision>) => ({ ...current, [key]: decision }))}
+                  unitDifferences={[]}
+                  disabled={busy}
+                />
                 <div className="import-preview-scroll">
                   <table className="import-preview-table">
                     <thead>
                       <tr><th>Categoría</th><th>Nombre</th><th>Precio</th><th>Disponible</th><th>Estado</th><th></th></tr>
                     </thead>
                     <tbody>
-                      {rows.map((row, index) => (
+                      {effectiveRows.map((row, index) => (
                         <tr key={index} className={row._errors.length > 0 ? 'row-error' : 'row-ok'}>
                           {editingIndex === index && editDraft ? (
                             <>
@@ -557,8 +639,8 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
             <div className="team-dialog-actions">
               <button className="outline-button" type="button" onClick={onClose} disabled={busy}>Cerrar</button>
               {validRows.length > 0 && !result && (
-                <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy}>
-                  <Upload size={16} />{busy ? 'Importando...' : `Importar ${validRows.length} productos`}
+                <button className="primary-button" type="button" onClick={() => void handleImport()} disabled={busy || pending > 0} title={pending > 0 ? `Decide primero los ${pending} avisos` : undefined}>
+                  <Upload size={16} />{busy ? 'Importando...' : pending > 0 ? `Decide ${pending} avisos` : `Importar ${validRows.length} productos`}
                 </button>
               )}
             </div>
@@ -568,6 +650,16 @@ export function MenuImportExportDialog({ onClose, onImported }: MenuImportExport
         {tab === 'manage' && (
           <>
             {productError && <p className="auth-feedback error" role="alert">{productError}</p>}
+            {similarEdit && (
+              <div className="similar-panel" role="alert">
+                <h3><AlertTriangle size={16} /> Ya tienes productos parecidos</h3>
+                <ul className="similar-units">
+                  {similarEdit.hit.candidates.map((candidate) => <li key={candidate.item.id}>«{candidate.item.name}»{candidate.item.archived ? ' (desactivado)' : ''}</li>)}
+                </ul>
+                <p className="muted">Si es el mismo producto, cancela y edita ese. Si es distinto, guarda de todas formas.</p>
+                <button className="primary-button" type="button" disabled={busy} onClick={() => void saveProduct()}>Es distinto: guardar «{editProduct?.name.trim()}»</button>
+              </div>
+            )}
             {!productsLoaded && <p className="account-empty">Cargando productos...</p>}
             {productsLoaded && products.length === 0 && <p className="account-empty">No hay productos activos en el menú.</p>}
 
