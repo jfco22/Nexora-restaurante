@@ -113,6 +113,7 @@ export function InventoryStockTab({ items, archivedItems, usedToday, onChanged }
       {itemDialog && (
         <ItemDialog
           item={itemDialog === 'new' ? null : itemDialog}
+          knownItems={[...items, ...archivedItems].map((entry: InventoryItem) => ({ id: entry.id, name: entry.name, unit: entry.unit, archived: !entry.is_active }))}
           onSaved={async () => {
             setItemDialog(null);
             await onChanged();

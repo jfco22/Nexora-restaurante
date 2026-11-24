@@ -1,8 +1,10 @@
 import { NumberInput } from '@/components/NumberInput';
 import { FormProblem } from '@/components/FormProblem';
-import { useState } from 'react';
-import { Archive, ArchiveRestore, X } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { AlertTriangle, Archive, ArchiveRestore, X } from 'lucide-react';
 import '@/components/salon/account.css';
+import '@/components/inventory/inventory-import.css';
+import { findSimilarNames, normalizeKey, type KnownItem, type SimilarHit } from '@/lib/similarItems';
 import {
   saveInventoryItem,
   setInventoryItemActive,
@@ -15,6 +17,8 @@ import {
 
 type ItemDialogProps = {
   item: InventoryItem | null;
+  /** Todos los insumos (activos y archivados) para avisar si el nombre se parece a uno existente. */
+  knownItems?: KnownItem[];
   onSaved: () => Promise<void>;
   onClose: () => void;
 };
@@ -22,13 +26,15 @@ type ItemDialogProps = {
 const units = Object.keys(unitLabels) as InventoryUnit[];
 const locations = Object.keys(storageLabels) as StorageLocation[];
 
-export function ItemDialog({ item, onSaved, onClose }: ItemDialogProps) {
+export function ItemDialog({ item, knownItems = [], onSaved, onClose }: ItemDialogProps) {
   const [name, setName] = useState(item?.name ?? '');
   const [unit, setUnit] = useState<InventoryUnit>(item?.unit ?? 'unidad');
   const [location, setLocation] = useState<StorageLocation>(item?.storage_location ?? 'bodega');
   const [minStock, setMinStock] = useState(String(item?.min_stock ?? 0));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [similar, setSimilar] = useState<SimilarHit | null>(null);
+  const confirmedKey = useRef<string | null>(null);
 
   const parsedMin = Number(minStock);
   const nameValid = name.trim().length >= 1 && name.trim().length <= 80;
@@ -51,11 +57,44 @@ export function ItemDialog({ item, onSaved, onClose }: ItemDialogProps) {
     await onSaved();
   };
 
+  const useExisting = async (candidate: KnownItem): Promise<void> => {
+    setBusy(true);
+    setError(null);
+    if (candidate.archived) {
+      const failure = await setInventoryItemActive(candidate.id, true);
+      if (failure) {
+        setError(failure);
+        setBusy(false);
+        return;
+      }
+    }
+    await onSaved();
+  };
+
   const submit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (!canSubmit) return;
-    setBusy(true);
     setError(null);
+
+    // Nombre nuevo (o cambiado): revisa que no sea igual ni parecido a un insumo que ya existe.
+    const key = normalizeKey(name);
+    if (!item || key !== normalizeKey(item.name)) {
+      const others = knownItems.filter((known: KnownItem) => known.id !== item?.id);
+      const exact = others.find((known: KnownItem) => normalizeKey(known.name) === key);
+      if (exact) {
+        setSimilar({ key, name: name.trim(), unit, rows: [1], candidates: [{ item: exact, score: 1, unitDiffers: exact.unit !== unit }] });
+        return;
+      }
+      if (confirmedKey.current !== key) {
+        const hit = findSimilarNames([{ name, unit, rowNumber: 1 }], others)[0];
+        if (hit) {
+          setSimilar(hit);
+          return;
+        }
+      }
+    }
+    setSimilar(null);
+    setBusy(true);
     const failure = await saveInventoryItem(item?.id ?? null, {
       name,
       unit,
@@ -84,7 +123,7 @@ export function ItemDialog({ item, onSaved, onClose }: ItemDialogProps) {
         <div className="inventory-form">
           <label>
             Nombre
-            <input value={name} maxLength={80} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)} placeholder="Ej. Queso mozzarella" />
+            <input value={name} maxLength={80} onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setName(event.target.value); setSimilar(null); }} placeholder="Ej. Queso mozzarella" />
           </label>
 
           <div className="inventory-form-row">
@@ -107,6 +146,28 @@ export function ItemDialog({ item, onSaved, onClose }: ItemDialogProps) {
             <NumberInput value={minStock} onChange={setMinStock} decimals />
           </label>
         </div>
+
+        {similar && (
+          <div className="similar-panel" role="alert">
+            <h3><AlertTriangle size={16} /> {similar.candidates[0]?.score === 1 && normalizeKey(similar.candidates[0].item.name) === similar.key ? 'Este insumo ya existe' : 'Ya tienes insumos parecidos'}</h3>
+            {similar.candidates.map((candidate) => (
+              <label key={candidate.item.id} className="similar-option">
+                <span>
+                  «{candidate.item.name}» ({candidate.item.unit === 'unidad' ? 'unidades' : candidate.item.unit}){candidate.item.archived ? ' · archivado' : ''}
+                  {candidate.unitDiffers && <em className="similar-unit-warning"> · unidad distinta a la que elegiste</em>}
+                </span>
+                <button className="outline-button" type="button" disabled={busy} onClick={() => void useExisting(candidate.item)}>
+                  {candidate.item.archived ? 'Es el mismo: reactivarlo' : 'Es el mismo: usar ese'}
+                </button>
+              </label>
+            ))}
+            {normalizeKey(similar.candidates[0]?.item.name ?? '') !== similar.key && (
+              <button className="primary-button" type="submit" disabled={busy} onClick={() => { confirmedKey.current = similar.key; }}>
+                Es distinto: crear «{similar.name}» de todas formas
+              </button>
+            )}
+          </div>
+        )}
 
         <FormProblem message={problem} />
         {error && <p className="auth-feedback error" role="alert">{error}</p>}
