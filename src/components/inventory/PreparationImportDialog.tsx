@@ -50,6 +50,12 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
   );
   const entries: NameEntry[] = useMemo(
     () => (parsed ? [
+      // Nombre de cada preparación (su resultado es un insumo): también puede parecerse a uno existente.
+      ...parsed.specs.filter((spec) => spec.name !== '').map((spec) => ({
+        name: spec.name,
+        unit: spec.yieldUnit,
+        rowNumber: parsed.rows.find((row) => row.product === spec.name)?.rowNumber ?? 2,
+      })),
       ...parsed.rows.filter((row) => row.item !== '').map((row) => ({ name: row.item, unit: row.unit, rowNumber: row.rowNumber })),
       ...parsed.extras.filter((extra) => extra.item !== '').map((extra) => ({ name: extra.item, unit: extra.unit, rowNumber: extra.rowNumber })),
     ] : []),
@@ -64,8 +70,9 @@ export function PreparationImportDialog({ onClose, onImported }: Props) {
   const effective = useMemo(
     () => (parsed ? {
       ...parsed,
-      rows: parsed.rows.map((row) => ({ ...row, item: resolveName(row.item, decisions, known) })),
-      extras: parsed.extras.map((extra) => ({ ...extra, item: resolveName(extra.item, decisions, known) })),
+      specs: parsed.specs.map((spec) => ({ ...spec, name: resolveName(spec.name, decisions, known) })),
+      rows: parsed.rows.map((row) => ({ ...row, product: resolveName(row.product, decisions, known), item: resolveName(row.item, decisions, known) })),
+      extras: parsed.extras.map((extra) => ({ ...extra, preparation: resolveName(extra.preparation, decisions, known), item: resolveName(extra.item, decisions, known) })),
     } : null),
     [parsed, decisions, known],
   );
