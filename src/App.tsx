@@ -46,6 +46,9 @@ import { useDashboardData, methodLabels } from '@/lib/dashboardData';
 import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
 import { OfflineStatusBar } from '@/components/OfflineStatusBar';
 import { HoursView } from '@/components/horas/HoursView';
+import { SalesView } from '@/components/finanzas/SalesView';
+import { PurchasesExpensesView } from '@/components/finanzas/PurchasesExpensesView';
+import { ReportsView } from '@/components/finanzas/ReportsView';
 import { ShiftPill } from '@/components/horas/ShiftPill';
 import { DeviceGate } from '@/components/horas/DeviceGate';
 import { useWorkTracking } from '@/lib/useWorkTracking';
@@ -55,7 +58,7 @@ import { addSale, newClientId, removeSale, methodLabel, type OfflineMethod, type
 import { useConnectivity, useOfflineSales } from '@/lib/offline/useOffline';
 import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions, type ProductOptionMap } from '@/lib/productOptions';
 
-type View = 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo' | 'horas';
+type View = 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo' | 'horas' | 'ventas' | 'gastos' | 'reportes';
 
 type Product = {
   id: string;
@@ -313,6 +316,7 @@ function App() {
           <NavButton icon={<ReceiptText size={17} />} label="Pedidos" active={false} onClick={() => setView('carta')} />
           <NavButton icon={<Utensils size={17} />} label="Salón" active={view === 'salon'} onClick={() => setView('salon')} />
           <NavButton icon={<Banknote size={17} />} label="Caja" active={view === 'caja'} onClick={() => setView('caja')} />
+          {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<ReceiptText size={17} />} label="Ventas" active={view === 'ventas'} onClick={() => setView('ventas')} />}
           <NavButton icon={<Clock3 size={17} />} label="Cocina" badge={kitchenCount} active={view === 'cocina'} onClick={() => setView('cocina')} />
           <NavButton icon={<ShoppingBag size={17} />} label="Despacho" active={false} onClick={() => setView('carta')} />
           <NavButton icon={<BookOpen size={17} />} label="Reservas" active={false} onClick={() => setView('salon')} />
@@ -324,8 +328,8 @@ function App() {
           <p className="nav-label">Administración</p>
           {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<Users size={17} />} label="Equipo" active={view === 'equipo'} onClick={() => setView('equipo')} />}
           {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<Clock3 size={17} />} label="Horas" active={view === 'horas'} onClick={() => setView('horas')} />}
-          <NavButton icon={<WalletCards size={17} />} label="Compras y gastos" active={false} onClick={() => setView('inicio')} />
-          <NavButton icon={<BarChart3 size={17} />} label="Reportes" active={false} onClick={() => setView('inicio')} />
+          {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<WalletCards size={17} />} label="Compras y gastos" active={view === 'gastos'} onClick={() => setView('gastos')} />}
+          {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<BarChart3 size={17} />} label="Reportes" active={view === 'reportes'} onClick={() => setView('reportes')} />}
           <NavButton icon={<Users size={17} />} label="Mi perfil" active={view === 'perfil'} onClick={() => setView('perfil')} />
         </nav>
 
@@ -337,7 +341,7 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark">N</span>Nexora</div>
-          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : view === 'horas' ? 'Horas' : 'Carta y pedidos'}</strong></div>
+          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : view === 'horas' ? 'Horas' : view === 'ventas' ? 'Ventas' : view === 'gastos' ? 'Compras y gastos' : view === 'reportes' ? 'Reportes' : 'Carta y pedidos'}</strong></div>
           <div className="topbar-actions"><button className="icon-button" type="button" aria-label="Notificaciones"><Bell size={18} /></button><span className="language">ES</span><span className="avatar">{(profile?.display_name?.slice(0, 2) ?? 'MA').toUpperCase()}</span></div>
         </header>
 
@@ -350,6 +354,9 @@ function App() {
         {menuImportOpen && profile && MANAGING_ROLES.includes(profile.role) && <MenuImportExportDialog onClose={() => setMenuImportOpen(false)} onImported={() => void loadCatalog()} />}
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}
         {view === 'horas' && profile && MANAGING_ROLES.includes(profile.role) && <HoursView tracking={tracking} />}
+        {view === 'ventas' && profile && MANAGING_ROLES.includes(profile.role) && <SalesView />}
+        {view === 'gastos' && profile && MANAGING_ROLES.includes(profile.role) && <PurchasesExpensesView />}
+        {view === 'reportes' && profile && MANAGING_ROLES.includes(profile.role) && <ReportsView onOpenSales={() => setView('ventas')} />}
         {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} onSignOut={signOutNow} />}
         <OfflineStatusBar online={online} sales={offlineSales.sales} syncing={offlineSales.syncing} onSync={() => void offlineSales.syncNow()} onDiscard={(clientId: string) => { removeSale(clientId); offlineSales.refresh(); }} />
         {dataError && <div className="data-notice" role="alert">{dataError}</div>}
@@ -371,6 +378,7 @@ const cop = (value: number): string => formatCurrency(value);
 
 function Dashboard({ profile, onNavigate }: DashboardProps) {
   const displayName = profile?.display_name ?? 'Usuario';
+  const canSeeSales = Boolean(profile && MANAGING_ROLES.includes(profile.role));
   const { data, loaded, reload } = useDashboardData();
   const today = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const maxDay = Math.max(1, ...(data?.days.map((day: { total: number }) => day.total) ?? [0]));
@@ -385,8 +393,8 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
       <div className="page-heading"><div><p className="eyebrow">{today}</p><h1>{greetingForHour()}, {displayName}</h1><p className="muted">Esto es lo que está pasando en tu restaurante hoy.</p></div><button className="outline-button" type="button" onClick={reload}><BarChart3 size={16} /> Actualizar</button></div>
       {loaded && !data && <div className="data-notice" role="alert">No pudimos cargar las cifras del día. Revisa la conexión e inténtalo de nuevo.</div>}
       <section className="metric-grid">
-        <Metric label="Ventas hoy" value={cop(data?.salesToday ?? 0)} detail={data && data.paymentsToday > 0 ? `${data.paymentsToday} pagos · ticket ${cop(ticket)}` : 'Aún no hay ventas hoy'} trend="Hoy" />
-        <Metric label="Ventas del mes" value={cop(data?.salesMonth ?? 0)} detail="Pagos recibidos este mes" trend="Mes" />
+         <Metric onClick={canSeeSales ? () => onNavigate('ventas') : undefined} label="Ventas hoy" value={cop(data?.salesToday ?? 0)} detail={data && data.paymentsToday > 0 ? `${data.paymentsToday} pagos · ticket ${cop(ticket)}` : 'Aún no hay ventas hoy'} trend="Hoy" />
+         <Metric onClick={canSeeSales ? () => onNavigate('ventas') : undefined} label="Ventas del mes" value={cop(data?.salesMonth ?? 0)} detail="Pagos recibidos este mes" trend="Mes" />
         <Metric label="Pendiente por cobrar" value={cop(data?.pendingToCollect ?? 0)} detail={data && data.pendingToCollect > 0 ? 'Pedidos sin pagar' : 'Al día · nada sin cobrar'} trend={data && data.pendingToCollect > 0 ? 'Por cobrar' : 'Al día'} positive={!data || data.pendingToCollect === 0} />
         <Metric label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} detail="En curso ahora mismo" trend="Ahora" />
       </section>
@@ -400,8 +408,8 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
   );
 }
 
-function Metric({ label, value, detail, trend, positive = false }: { label: string; value: string; detail: string; trend: string; positive?: boolean }) {
-  return <article className="metric-card"><div className="metric-top"><span>{label}</span><ArrowUpRight size={16} /></div><strong>{value}</strong><div className="metric-bottom"><span>{detail}</span><em className={positive ? 'positive' : ''}>{trend}</em></div></article>;
+function Metric({ label, value, detail, trend, positive = false, onClick }: { label: string; value: string; detail: string; trend: string; positive?: boolean; onClick?: () => void }) {
+  return <article className="metric-card" onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} style={onClick ? { cursor: 'pointer' } : undefined} title={onClick ? 'Ver el detalle de ventas' : undefined}><div className="metric-top"><span>{label}</span><ArrowUpRight size={16} /></div><strong>{value}</strong><div className="metric-bottom"><span>{detail}</span><em className={positive ? 'positive' : ''}>{trend}</em></div></article>;
 }
 
 function PaymentRow({ label, value, percentage, color }: { label: string; value: string; percentage: string; color: string }) {
