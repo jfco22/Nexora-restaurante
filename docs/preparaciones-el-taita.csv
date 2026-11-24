@@ -1,7 +1,7 @@
 ﻿Preparación;Rinde;Unidad rinde;Tipo;Insumo;Cantidad;Unidad;Ubicación
 Caldo de birria;3040;g;;Costilla de res con carne;2000;g;nevera
 Caldo de birria;;;;Aceite;15;ml;estanteria
-Caldo de birria;;;;Tomate;800;g;estanteria
+Caldo de birria;;;;Tomate de guiso;800;g;estanteria
 Caldo de birria;;;;Cebolla blanca;1,5;unidad;estanteria
 Caldo de birria;;;;Ajo (cabeza);8;unidad;estanteria
 Caldo de birria;;;;Pimienta gorda (dulce);6;g;estanteria
@@ -14,7 +14,12 @@ Caldo de birria;;;;Chile ancho;4;unidad;estanteria
 Caldo de birria;;;;Chile guajillo;5;unidad;estanteria
 Caldo de birria;;;;Vinagre blanco;15;ml;estanteria
 Caldo de birria;;;resultado;Carne de birria;700;g;nevera
-Hogao;800;g;;Tomate;600;g;estanteria
+Hogao;800;g;;Tomate de guiso;600;g;estanteria
 Hogao;;;;Cebolla blanca;3;unidad;estanteria
 Hogao;;;;Ajo (cabeza);1;unidad;estanteria
 Hogao;;;;Aceite;30;ml;estanteria
+Pico de gallo;500;g;;Tomate de guiso;250;g;estanteria
+Pico de gallo;;;;Cebolla blanca;1,5;unidad;estanteria
+Pico de gallo;;;;Cilantro;20;g;nevera
+Pico de gallo;;;;Limón;2;unidad;estanteria
+Pico de gallo;;;;Sal;3;g;estanteria

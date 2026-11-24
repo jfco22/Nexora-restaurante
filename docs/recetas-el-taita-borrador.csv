@@ -1,26 +1,26 @@
 ﻿Producto;Insumo;Cantidad;Unidad;Ubicación
 Hamburguesa Doña Carmen;Pan artesanal hamburguesa;1;unidad;estanteria
 Hamburguesa Doña Carmen;Carne carmelita;150;g;nevera
-Hamburguesa Doña Carmen;Queso doble crema;1;unidad;nevera
-Hamburguesa Doña Carmen;Tomate;25;g;estanteria
+Hamburguesa Doña Carmen;Queso doble crema (tajada);1;unidad;nevera
+Hamburguesa Doña Carmen;Tomate de ensalada;25;g;estanteria
 Hamburguesa Doña Carmen;Lechuga;1;unidad;nevera
 Hamburguesa Doña Carmen;Salsa de la casa;;ml;nevera
 Hamburguesa Gallina mellicera;Pan artesanal hamburguesa;1;unidad;estanteria
 Hamburguesa Gallina mellicera;Carne de pollo molida;;g;nevera
-Hamburguesa Gallina mellicera;Queso doble crema;;unidad;nevera
-Hamburguesa Gallina mellicera;Tomate;;g;estanteria
+Hamburguesa Gallina mellicera;Queso doble crema (tajada);;unidad;nevera
+Hamburguesa Gallina mellicera;Tomate de ensalada;;g;estanteria
 Hamburguesa Gallina mellicera;Lechuga;;unidad;nevera
 Hamburguesa La Jornalera;Pan artesanal hamburguesa;1;unidad;estanteria
 Hamburguesa La Jornalera;Carne de res molida;150;g;nevera
 Hamburguesa La Jornalera;Queso cheddar;1;unidad;nevera
-Hamburguesa La Jornalera;Tomate;25;g;estanteria
+Hamburguesa La Jornalera;Tomate de ensalada;25;g;estanteria
 Hamburguesa La Jornalera;Lechuga;1;unidad;nevera
 Hamburguesa La Jornalera;Salsa de la casa;;ml;nevera
 Perro Caliente Normal;Pan artesanal perro;1;unidad;estanteria
 Perro Caliente Normal;Salchicha americana;1;unidad;nevera
 Perro Caliente Normal;Papa fosforito;20;g;estanteria
 Perro Caliente Normal;Salsa de la casa;10;ml;nevera
-Perro Caliente Normal;Queso doble crema;1;unidad;nevera
+Perro Caliente Normal;Queso doble crema (tajada);1;unidad;nevera
 Perro Caliente Normal;Salsa rosada;10;ml;nevera
 Perro Caliente Normal;Salsa mostaza;10;ml;nevera
 Perro Caliente Normal;Salsa roja;10;ml;nevera
@@ -29,7 +29,7 @@ Perro con una carne;Pan artesanal perro;1;unidad;estanteria
 Perro con una carne;Salchicha americana;1;unidad;nevera
 Perro con una carne;Papa fosforito;20;g;estanteria
 Perro con una carne;Salsa de la casa;10;ml;nevera
-Perro con una carne;Queso doble crema;1;unidad;nevera
+Perro con una carne;Queso doble crema (tajada);1;unidad;nevera
 Perro con una carne;Salsa rosada;10;ml;nevera
 Perro con una carne;Salsa mostaza;10;ml;nevera
 Perro con una carne;Salsa roja;10;ml;nevera
@@ -39,7 +39,7 @@ Perro con Res Mechada;Pan artesanal perro;1;unidad;estanteria
 Perro con Res Mechada;Salchicha americana;1;unidad;nevera
 Perro con Res Mechada;Papa fosforito;20;g;estanteria
 Perro con Res Mechada;Salsa de la casa;10;ml;nevera
-Perro con Res Mechada;Queso doble crema;1;unidad;nevera
+Perro con Res Mechada;Queso doble crema (tajada);1;unidad;nevera
 Perro con Res Mechada;Salsa rosada;10;ml;nevera
 Perro con Res Mechada;Salsa mostaza;10;ml;nevera
 Perro con Res Mechada;Salsa roja;10;ml;nevera
@@ -49,7 +49,7 @@ Perro Champiñones + Pollo;Pan artesanal perro;1;unidad;estanteria
 Perro Champiñones + Pollo;Salchicha americana;1;unidad;nevera
 Perro Champiñones + Pollo;Papa fosforito;20;g;estanteria
 Perro Champiñones + Pollo;Salsa de la casa;10;ml;nevera
-Perro Champiñones + Pollo;Queso doble crema;1;unidad;nevera
+Perro Champiñones + Pollo;Queso doble crema (tajada);1;unidad;nevera
 Perro Champiñones + Pollo;Salsa rosada;10;ml;nevera
 Perro Champiñones + Pollo;Salsa mostaza;10;ml;nevera
 Perro Champiñones + Pollo;Salsa roja;10;ml;nevera
@@ -60,21 +60,21 @@ Perro con dos carnes;Pan artesanal perro;1;unidad;estanteria
 Perro con dos carnes;Salchicha americana;1;unidad;nevera
 Perro con dos carnes;Papa fosforito;20;g;estanteria
 Perro con dos carnes;Salsa de la casa;10;ml;nevera
-Perro con dos carnes;Queso doble crema;1;unidad;nevera
+Perro con dos carnes;Queso doble crema (tajada);1;unidad;nevera
 Perro con dos carnes;Salsa rosada;10;ml;nevera
 Perro con dos carnes;Salsa mostaza;10;ml;nevera
 Perro con dos carnes;Salsa roja;10;ml;nevera
 Perro con dos carnes;Huevo de codorniz;1;unidad;nevera
 Sándwich de Res Mechada;Pan artesanal sándwich;1;unidad;estanteria
 Sándwich de Res Mechada;Res mechada BBQ;120;g;nevera
-Sándwich de Res Mechada;Queso doble crema;1;unidad;nevera
-Sándwich de Res Mechada;Tomate;37,5;g;estanteria
+Sándwich de Res Mechada;Queso doble crema (tajada);1;unidad;nevera
+Sándwich de Res Mechada;Tomate de ensalada;37,5;g;estanteria
 Sándwich de Res Mechada;Lechuga;1;unidad;nevera
 Sándwich de Res Mechada;Salsa de la casa;;ml;nevera
 Sándwich de Chorizo con hogao;Pan artesanal sándwich;1;unidad;estanteria
 Sándwich de Chorizo con hogao;Hogao;120;g;nevera
-Sándwich de Chorizo con hogao;Queso doble crema;1;unidad;nevera
-Sándwich de Chorizo con hogao;Tomate;37,5;g;estanteria
+Sándwich de Chorizo con hogao;Queso doble crema (tajada);1;unidad;nevera
+Sándwich de Chorizo con hogao;Tomate de ensalada;37,5;g;estanteria
 Sándwich de Chorizo con hogao;Lechuga;1;unidad;nevera
 Sándwich de Chorizo con hogao;Salsa de la casa;;ml;nevera
 Sándwich de Pollo con Champiñones;Pan artesanal sándwich;1;unidad;estanteria
@@ -82,35 +82,33 @@ Sándwich de Pollo con Champiñones;Pollo desmechado;120;g;nevera
 Sándwich de Pollo con Champiñones;Champiñones;20;g;nevera
 Sándwich de Pollo con Champiñones;Salsa bechamel;;ml;nevera
 Sándwich de Pollo con Champiñones;Salsa de la casa;;ml;nevera
-Sándwich de Pollo con Champiñones;Queso doble crema;1;unidad;nevera
-Sándwich de Pollo con Champiñones;Tomate;37,5;g;estanteria
+Sándwich de Pollo con Champiñones;Queso doble crema (tajada);1;unidad;nevera
+Sándwich de Pollo con Champiñones;Tomate de ensalada;37,5;g;estanteria
 Sándwich de Pollo con Champiñones;Lechuga;1;unidad;nevera
 Sándwich Vegano;Pan artesanal sándwich;1;unidad;estanteria
 Sándwich Vegano;Lechuga;;unidad;nevera
-Sándwich Vegano;Tomate;;g;estanteria
+Sándwich Vegano;Tomate de ensalada;;g;estanteria
 Sándwich Vegano;Pepinillo;;g;estanteria
 Sándwich Vegano;Champiñones;;g;nevera
 Birriamen 140 gr;Fideos ramen;;g;estanteria
 Birriamen 140 gr;Res mechada;;g;nevera
 Birriamen 140 gr;Caldo de birria;140;g;nevera
-Birriamen 140 gr;Queso doble crema;;unidad;nevera
+Birriamen 140 gr;Queso doble crema (rayado);;g;nevera
 Birriamen 140 gr;Tostadas;;g;estanteria
 Birriamen 140 gr;Pico de gallo;;g;nevera
 Birriamen 240 gr;Fideos ramen;;g;estanteria
 Birriamen 240 gr;Res mechada;;g;nevera
 Birriamen 240 gr;Caldo de birria;240;g;nevera
-Birriamen 240 gr;Queso doble crema;;unidad;nevera
+Birriamen 240 gr;Queso doble crema (rayado);;g;nevera
 Birriamen 240 gr;Tostadas;;g;estanteria
 Birriamen 240 gr;Pico de gallo;;g;nevera
 Birria con taco;Caldo de birria;120;g;nevera
 Birria con taco;Carne de birria;20;g;nevera
 Birria con taco;Tortilla;1;unidad;estanteria
-Birria con taco;Queso rayado;30;g;nevera
+Birria con taco;Queso doble crema (rayado);30;g;nevera
 Birria con taco;Cilantro;10;g;nevera
 Birria con taco;Cebolla blanca;0,067;unidad;estanteria
-Mini Hamburguesa de res;Pan artesanal mini hamburguesa;1;unidad;estanteria
-Mini Hamburguesa de res;Carne de res molida;;g;nevera
-Mini Hamburguesa de res;Queso doble crema;;unidad;nevera
+Mini Hamburguesa de res;Mini hamburguesa;1;unidad;nevera
 Agua Cristal 250 ml;Agua Cristal 250 ml;1;unidad;bodega
 Coca Cola 250 ml;Coca Cola 250 ml;1;unidad;bodega
 Hit Surti 200 ml;Hit Surti 200 ml;1;unidad;bodega

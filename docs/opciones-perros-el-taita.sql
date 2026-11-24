@@ -1,6 +1,6 @@
 -- Opciones de los perros con carne a escoger (El Taita).
 -- CORRER DESPUÉS de: 1) la migración "product_option_choices", 2) importar el menú, 3) tener cargados los insumos
--- (Res mechada, Pollo desmechado, Champiñones, Hogao, Tomate, Cebolla blanca).
+-- (Res mechada, Pollo desmechado, Champiñones, Hogao, Tomate de guiso, Cebolla blanca).
 -- Se puede correr varias veces: reemplaza las opciones y las cantidades.
 DO $$
 DECLARE
@@ -15,7 +15,7 @@ BEGIN
   FOR r IN SELECT * FROM (VALUES
     ('Res mechada',          'Res mechada',      60::numeric),
     ('Carne con guiso',      'Res mechada',      60),
-    ('Carne con guiso',      'Tomate',           50),
+    ('Carne con guiso',      'Tomate de guiso',  50),
     ('Carne con guiso',      'Cebolla blanca',   0.25),
     ('Pollo con champiñones','Pollo desmechado', 30),
     ('Pollo con champiñones','Champiñones',      30),
@@ -46,7 +46,7 @@ BEGIN
   FOR r IN SELECT * FROM (VALUES
     ('Res mechada',          'Res mechada',      60::numeric),
     ('Carne con guiso',      'Res mechada',      60),
-    ('Carne con guiso',      'Tomate',           50),
+    ('Carne con guiso',      'Tomate de guiso',  50),
     ('Carne con guiso',      'Cebolla blanca',   0.25),
     ('Pollo con champiñones','Pollo desmechado', 30),
     ('Pollo con champiñones','Champiñones',      30),

@@ -345,7 +345,7 @@ function App() {
         {view === 'salon' && <SalonView />}
         {view === 'caja' && <CashierOrders />}
         {view === 'cocina' && <KitchenBoard />}
-        {view === 'inventario' && <InventoryView onImport={() => setImportOpen(true)} canManage={Boolean(profile && MANAGING_ROLES.includes(profile.role))} />}
+        {view === 'inventario' && <InventoryView onImport={() => setImportOpen(true)} canManage={Boolean(profile && MANAGING_ROLES.includes(profile.role))} isKitchen={profile?.role === 'kitchen'} />}
         {importOpen && <InventoryImportDialog onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); setView('inventario'); }} />}
         {menuImportOpen && profile && MANAGING_ROLES.includes(profile.role) && <MenuImportExportDialog onClose={() => setMenuImportOpen(false)} onImported={() => void loadCatalog()} />}
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}

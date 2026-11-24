@@ -18,7 +18,7 @@ const tabs: { value: InventoryTab; label: string; icon: React.ReactNode }[] = [
   { value: 'shopping', label: 'Por comprar', icon: <ShoppingBasket size={16} /> },
 ];
 
-export function InventoryView({ onImport, canManage }: { onImport: () => void; canManage: boolean }) {
+export function InventoryView({ onImport, canManage, isKitchen = false }: { onImport: () => void; canManage: boolean; isKitchen?: boolean }) {
   const [tab, setTab] = useState<InventoryTab>('stock');
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<InventoryItem[]>([]);
@@ -60,7 +60,7 @@ export function InventoryView({ onImport, canManage }: { onImport: () => void; c
       </div>
 
       <div className="inventory-tabs" role="tablist" aria-label="Secciones de inventario">
-        {tabs.filter((option) => canManage || (option.value !== 'recipes' && option.value !== 'cook')).map((option) => (
+        {tabs.filter((option) => canManage || (option.value !== 'recipes' && (option.value !== 'cook' || isKitchen))).map((option) => (
           <button
             key={option.value}
             type="button"
@@ -81,7 +81,7 @@ export function InventoryView({ onImport, canManage }: { onImport: () => void; c
         <InventoryStockTab items={items} archivedItems={archivedItems} usedToday={usedToday} onChanged={loadInventory} />
       )}
       {loaded && canManage && tab === 'recipes' && <RecipesTab key={recipesVersion} items={items} />}
-      {loaded && canManage && tab === 'cook' && <PreparationsTab items={items} onChanged={loadInventory} />}
+      {loaded && (canManage || isKitchen) && tab === 'cook' && <PreparationsTab items={items} onChanged={loadInventory} restricted={!canManage} />}
       {loaded && tab === 'shopping' && <ShoppingTab items={items} />}
       {recipeImportOpen && (
         <RecipeImportDialog
