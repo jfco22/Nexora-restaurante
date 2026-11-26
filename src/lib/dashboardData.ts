@@ -6,6 +6,7 @@ export type DashboardData = {
   salesToday: number;
   paymentsToday: number;
   pendingToCollect: number;
+  pendingCount: number;
   salesMonth: number;
   byMethod: { method: string; total: number }[];
   days: { label: string; total: number }[];
@@ -66,6 +67,7 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
   return {
     salesToday,
     paymentsToday,
+    pendingCount: (unpaid.data ?? []).length,
     pendingToCollect: ((unpaid.data ?? []) as { total_cop: number }[]).reduce((sum: number, order) => sum + order.total_cop, 0),
     salesMonth,
     byMethod: [...methodTotals.entries()].map(([method, total]: [string, number]) => ({ method, total })).sort((a, b) => b.total - a.total),

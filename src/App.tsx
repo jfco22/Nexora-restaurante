@@ -52,6 +52,7 @@ import { fetchInsights } from '@/lib/assistant';
 import { SalesView } from '@/components/finanzas/SalesView';
 import { PurchasesExpensesView } from '@/components/finanzas/PurchasesExpensesView';
 import { ReportsView } from '@/components/finanzas/ReportsView';
+import { OpenOrdersView } from '@/components/caja/OpenOrdersView';
 import { MarketingView } from '@/components/marketing/MarketingView';
 import { ShiftPill } from '@/components/horas/ShiftPill';
 import { DeviceGate } from '@/components/horas/DeviceGate';
@@ -62,7 +63,7 @@ import { addSale, newClientId, removeSale, methodLabel, type OfflineMethod, type
 import { useConnectivity, useOfflineSales } from '@/lib/offline/useOffline';
 import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions, type ProductOptionMap } from '@/lib/productOptions';
 
-type View = 'marketing' | 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo' | 'horas' | 'ventas' | 'gastos' | 'reportes';
+type View = 'abiertos' | 'marketing' | 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo' | 'horas' | 'ventas' | 'gastos' | 'reportes';
 
 type Product = {
   id: string;
@@ -346,7 +347,7 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark">N</span>Nexora</div>
-          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : view === 'horas' ? 'Horas' : view === 'ventas' ? 'Ventas' : view === 'gastos' ? 'Compras y gastos' : view === 'reportes' ? 'Reportes' : view === 'marketing' ? 'Marketing' : 'Carta y pedidos'}</strong></div>
+          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : view === 'horas' ? 'Horas' : view === 'ventas' ? 'Ventas' : view === 'gastos' ? 'Compras y gastos' : view === 'reportes' ? 'Reportes' : view === 'marketing' ? 'Marketing' : view === 'abiertos' ? 'Pedidos abiertos' : 'Carta y pedidos'}</strong></div>
           <div className="topbar-actions"><button className="icon-button" type="button" aria-label="Notificaciones"><Bell size={18} /></button><span className="language">ES</span><span className="avatar">{(profile?.display_name?.slice(0, 2) ?? 'MA').toUpperCase()}</span></div>
         </header>
 
@@ -362,6 +363,7 @@ function App() {
         {view === 'ventas' && profile && MANAGING_ROLES.includes(profile.role) && <SalesView />}
         {view === 'gastos' && profile && MANAGING_ROLES.includes(profile.role) && <PurchasesExpensesView />}
         {view === 'reportes' && profile && MANAGING_ROLES.includes(profile.role) && <ReportsView onOpenSales={() => setView('ventas')} />}
+        {view === 'abiertos' && <OpenOrdersView canManage={Boolean(profile && MANAGING_ROLES.includes(profile.role))} onOpenCaja={() => setView('caja')} onOpenKitchen={() => setView('cocina')} onOpenSalon={() => setView('salon')} onChanged={() => void 0} />}
         {view === 'marketing' && profile && (MANAGING_ROLES.includes(profile.role) || profile.role === 'marketing') && <MarketingView canApprove={MANAGING_ROLES.includes(profile.role)} />}
         {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} onSignOut={signOutNow} />}
         <OfflineStatusBar online={online} sales={offlineSales.sales} syncing={offlineSales.syncing} onSync={() => void offlineSales.syncNow()} onDiscard={(clientId: string) => { removeSale(clientId); offlineSales.refresh(); }} />
@@ -410,8 +412,8 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
       <section className="metric-grid">
          <Metric onClick={canSeeSales ? () => onNavigate('ventas') : undefined} label="Ventas hoy" value={cop(data?.salesToday ?? 0)} detail={data && data.paymentsToday > 0 ? `${data.paymentsToday} pagos · ticket ${cop(ticket)}` : 'Aún no hay ventas hoy'} trend="Hoy" />
          <Metric onClick={canSeeSales ? () => onNavigate('ventas') : undefined} label="Ventas del mes" value={cop(data?.salesMonth ?? 0)} detail="Pagos recibidos este mes" trend="Mes" />
-        <Metric label="Pendiente por cobrar" value={cop(data?.pendingToCollect ?? 0)} detail={data && data.pendingToCollect > 0 ? 'Pedidos sin pagar' : 'Al día · nada sin cobrar'} trend={data && data.pendingToCollect > 0 ? 'Por cobrar' : 'Al día'} positive={!data || data.pendingToCollect === 0} />
-        <Metric label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} detail="En curso ahora mismo" trend="Ahora" />
+        <Metric onClick={() => onNavigate('abiertos')} label="Pendiente por cobrar" value={cop(data?.pendingToCollect ?? 0)} detail={data && data.pendingToCollect > 0 ? `${data.pendingCount} ${data.pendingCount === 1 ? 'pedido sin pagar' : 'pedidos sin pagar'} · toca para ver` : 'Al día · nada sin cobrar'} trend={data && data.pendingToCollect > 0 ? 'Por cobrar' : 'Al día'} positive={!data || data.pendingToCollect === 0} />
+        <Metric onClick={() => onNavigate('abiertos')} label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} detail={data && data.openOrders > 0 ? 'Toca para ver cuáles son' : 'Ninguno en curso'} trend="Ahora" />
       </section>
       <section className="dashboard-grid">
         <div className="panel chart-panel"><div className="panel-heading"><div><h2>Ventas últimos 7 días</h2><p className="muted">{data && data.days.some((day: { total: number }) => day.total > 0) ? 'Pagos recibidos por día' : 'Todavía no hay ventas en los últimos 7 días'}</p></div></div><div className="chart"><div className="chart-y">{data && data.days.some((day: { total: number }) => day.total > 0) ? <><span>{cop(maxDay)}</span><span>{cop(Math.round(maxDay * 2 / 3))}</span><span>{cop(Math.round(maxDay / 3))}</span><span>0</span></> : <><span /><span /><span /><span>0</span></>}</div><svg viewBox="0 0 700 220" role="img" aria-label="Ventas de los últimos siete días"><defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#f0b4a5" stopOpacity=".45" /><stop offset="100%" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>{area && <path d={area} fill="url(#chart-fill)" />}{line && <path d={line} fill="none" stroke="#d9593b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}</svg></div><div className="chart-days">{(data?.days ?? []).map((day: { label: string }) => <span key={day.label}>{day.label}</span>)}</div></div>
@@ -424,13 +426,13 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
         </div>
       )}
       <div className="section-title"><h2>Ahora mismo</h2><span>{loaded ? 'Actualizado al abrir esta pantalla' : 'Cargando…'}</span></div>
-      <section className="quick-grid"><QuickCard icon={<ShoppingBag size={17} />} label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} action="Ir a pedidos" onClick={() => onNavigate('carta')} /><QuickCard icon={<Utensils size={17} />} label="Mesas ocupadas" value={`${data?.occupiedTables ?? 0} / ${data?.totalTables ?? 0}`} action="Ir a mesas" onClick={() => onNavigate('salon')} /><QuickCard icon={<Clock3 size={17} />} label="Tickets en cocina" value={String(data?.openOrders ?? 0)} action="Ver cocina" onClick={() => onNavigate('cocina')} /><QuickCard icon={<Boxes size={17} />} label="Insumos en alerta" value={String(data?.lowStock ?? 0)} action="Ver inventario" onClick={() => onNavigate('inventario')} /></section>
+      <section className="quick-grid"><QuickCard icon={<ShoppingBag size={17} />} label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} action="Ver detalle" onClick={() => onNavigate('abiertos')} /><QuickCard icon={<Utensils size={17} />} label="Mesas ocupadas" value={`${data?.occupiedTables ?? 0} / ${data?.totalTables ?? 0}`} action="Ir a mesas" onClick={() => onNavigate('salon')} /><QuickCard icon={<Clock3 size={17} />} label="Tickets en cocina" value={String(data?.openOrders ?? 0)} action="Ver cocina" onClick={() => onNavigate('cocina')} /><QuickCard icon={<Boxes size={17} />} label="Insumos en alerta" value={String(data?.lowStock ?? 0)} action="Ver inventario" onClick={() => onNavigate('inventario')} /></section>
     </div>
   );
 }
 
 function Metric({ label, value, detail, trend, positive = false, onClick }: { label: string; value: string; detail: string; trend: string; positive?: boolean; onClick?: () => void }) {
-  return <article className="metric-card" onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} style={onClick ? { cursor: 'pointer' } : undefined} title={onClick ? 'Ver el detalle de ventas' : undefined}><div className="metric-top"><span>{label}</span><ArrowUpRight size={16} /></div><strong>{value}</strong><div className="metric-bottom"><span>{detail}</span><em className={positive ? 'positive' : ''}>{trend}</em></div></article>;
+  return <article className="metric-card" onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} style={onClick ? { cursor: 'pointer' } : undefined} title={onClick ? 'Ver el detalle' : undefined}><div className="metric-top"><span>{label}</span><ArrowUpRight size={16} /></div><strong>{value}</strong><div className="metric-bottom"><span>{detail}</span><em className={positive ? 'positive' : ''}>{trend}</em></div></article>;
 }
 
 function PaymentRow({ label, value, percentage, color }: { label: string; value: string; percentage: string; color: string }) {
