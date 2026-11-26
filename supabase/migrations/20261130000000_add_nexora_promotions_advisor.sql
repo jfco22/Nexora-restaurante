@@ -57,6 +57,8 @@ REVOKE ALL ON public.nexora_promotions FROM anon, authenticated;
 DROP FUNCTION IF EXISTS public.nexora_promotion_suggestions(integer, numeric);
 DROP FUNCTION IF EXISTS public.accept_nexora_promotion(uuid, integer, integer, text, numeric);
 DROP FUNCTION IF EXISTS public.list_nexora_promotions();
+DROP FUNCTION IF EXISTS public.dismiss_nexora_promotion(uuid);
+DROP FUNCTION IF EXISTS public.end_nexora_promotion(uuid);
 
 CREATE OR REPLACE FUNCTION public.nexora_promotion_suggestions(max_results integer DEFAULT 8, expiry_weight numeric DEFAULT 0.4)
 RETURNS TABLE(
