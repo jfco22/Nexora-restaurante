@@ -47,6 +47,7 @@ import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
 import { OfflineStatusBar } from '@/components/OfflineStatusBar';
 import { HoursView } from '@/components/horas/HoursView';
 import { fetchFreshness, type FreshnessRow } from '@/lib/freshness';
+import { fetchInsights } from '@/lib/assistant';
 import { SalesView } from '@/components/finanzas/SalesView';
 import { PurchasesExpensesView } from '@/components/finanzas/PurchasesExpensesView';
 import { ReportsView } from '@/components/finanzas/ReportsView';
@@ -381,10 +382,14 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
   const displayName = profile?.display_name ?? 'Usuario';
   const canSeeSales = Boolean(profile && MANAGING_ROLES.includes(profile.role));
   const { data, loaded, reload } = useDashboardData();
-  const [stale, setStale] = useState<FreshnessRow[]>([]);
+  const [stale, setStale] = useState<{ name: string }[]>([]);
   useEffect(() => {
     if (!canSeeSales) return;
-    void fetchFreshness().then((result) => setStale(result.rows.filter((row: FreshnessRow) => row.level === 'alert')));
+    void fetchInsights().then(async (smart) => {
+      if (!smart.error) { setStale(smart.data.filter((row) => row.level === 'alert').map((row) => ({ name: row.name }))); return; }
+      const simple = await fetchFreshness();
+      setStale(simple.rows.filter((row: FreshnessRow) => row.level === 'alert').map((row: FreshnessRow) => ({ name: row.name })));
+    });
   }, [canSeeSales]);
   const today = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const maxDay = Math.max(1, ...(data?.days.map((day: { total: number }) => day.total) ?? [0]));
@@ -410,8 +415,8 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
       </section>
       {stale.length > 0 && (
         <div className="auth-feedback error" role="alert" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-          <span><strong>{stale.length} {stale.length === 1 ? 'insumo se está apichando' : 'insumos se están apichando'}:</strong> {stale.slice(0, 4).map((row: FreshnessRow) => row.name).join(', ')}{stale.length > 4 ? '…' : ''}. Haz promoción o úsalos ya.</span>
-          <button className="outline-button" type="button" onClick={() => onNavigate('inventario')}>Ver en Inventario &gt; Alertas</button>
+          <span><strong>{stale.length} {stale.length === 1 ? 'insumo se está apichando' : 'insumos se están apichando'}:</strong> {stale.slice(0, 4).map((row: { name: string }) => row.name).join(', ')}{stale.length > 4 ? '…' : ''}. Haz promoción o úsalos ya.</span>
+          <button className="outline-button" type="button" onClick={() => onNavigate('inventario')}>Ver en Inventario &gt; Asistente</button>
         </div>
       )}
       <div className="section-title"><h2>Ahora mismo</h2><span>{loaded ? 'Actualizado al abrir esta pantalla' : 'Cargando…'}</span></div>

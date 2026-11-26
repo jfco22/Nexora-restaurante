@@ -17,7 +17,7 @@ const tabs: { value: InventoryTab; label: string; icon: React.ReactNode }[] = [
   { value: 'recipes', label: 'Recetas', icon: <Soup size={16} /> },
   { value: 'cook', label: 'Cocinar', icon: <ChefHat size={16} /> },
   { value: 'shopping', label: 'Por comprar', icon: <ShoppingBasket size={16} /> },
-  { value: 'alerts', label: 'Alertas', icon: <Clock size={16} /> },
+  { value: 'alerts', label: 'Asistente', icon: <Clock size={16} /> },
 ];
 
 export function InventoryView({ onImport, canManage, isKitchen = false, canSeeAlerts = false }: { onImport: () => void; canManage: boolean; isKitchen?: boolean; canSeeAlerts?: boolean }) {
@@ -85,7 +85,7 @@ export function InventoryView({ onImport, canManage, isKitchen = false, canSeeAl
       {loaded && canManage && tab === 'recipes' && <RecipesTab key={recipesVersion} items={items} />}
       {loaded && (canManage || isKitchen) && tab === 'cook' && <PreparationsTab items={items} onChanged={loadInventory} restricted={!canManage} />}
       {loaded && tab === 'shopping' && <ShoppingTab items={items} />}
-      {canSeeAlerts && tab === 'alerts' && <FreshnessTab />}
+      {canSeeAlerts && tab === 'alerts' && <FreshnessTab canSeeSales={canManage} />}
       {recipeImportOpen && (
         <RecipeImportDialog
           onClose={() => setRecipeImportOpen(false)}

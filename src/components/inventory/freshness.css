@@ -20,3 +20,10 @@
 .fresh-table tr.watch td { background: #fff7e6; }
 .fresh-limit { display: flex; gap: 6px; align-items: center; }
 .fresh-limit input { width: 96px; padding: 7px 9px; border: 1px solid #e0e5df; border-radius: 9px; font: inherit; }
+
+.fresh-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.fresh-section { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid #e8ece7; border-radius: 14px; background: #fff; }
+.fresh-section h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 1rem; }
+.fresh-horizon { display: flex; gap: 8px; flex-wrap: wrap; }
+.fresh-horizon .chip { padding: 7px 13px; border: 1px solid #e0e5df; border-radius: 999px; background: #fff; font: inherit; font-size: .83rem; font-weight: 600; cursor: pointer; }
+.fresh-horizon .chip.active { color: #fff; background: #d9593b; border-color: #d9593b; }
