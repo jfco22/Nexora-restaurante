@@ -1,24 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ChefHat, ShoppingBasket, Boxes, Soup, Upload } from 'lucide-react';
+import { ChefHat, Clock, ShoppingBasket, Boxes, Soup, Upload } from 'lucide-react';
 import { RecipeImportDialog } from '@/components/inventory/RecipeImportDialog';
 import { fetchInventory, type InventoryItem } from '@/lib/inventory';
 import { InventoryStockTab } from '@/components/inventory/InventoryStockTab';
+import { FreshnessTab } from '@/components/inventory/FreshnessTab';
 import { PreparationsTab } from '@/components/inventory/PreparationsTab';
 import { RecipesTab } from '@/components/inventory/RecipesTab';
 import { ShoppingTab } from '@/components/inventory/ShoppingTab';
 import '@/components/inventory/inventory.css';
 import '@/components/inventory/inventory-import.css';
 
-type InventoryTab = 'stock' | 'recipes' | 'cook' | 'shopping';
+type InventoryTab = 'stock' | 'recipes' | 'cook' | 'shopping' | 'alerts';
 
 const tabs: { value: InventoryTab; label: string; icon: React.ReactNode }[] = [
   { value: 'stock', label: 'Insumos', icon: <Boxes size={16} /> },
   { value: 'recipes', label: 'Recetas', icon: <Soup size={16} /> },
   { value: 'cook', label: 'Cocinar', icon: <ChefHat size={16} /> },
   { value: 'shopping', label: 'Por comprar', icon: <ShoppingBasket size={16} /> },
+  { value: 'alerts', label: 'Alertas', icon: <Clock size={16} /> },
 ];
 
-export function InventoryView({ onImport, canManage, isKitchen = false }: { onImport: () => void; canManage: boolean; isKitchen?: boolean }) {
+export function InventoryView({ onImport, canManage, isKitchen = false, canSeeAlerts = false }: { onImport: () => void; canManage: boolean; isKitchen?: boolean; canSeeAlerts?: boolean }) {
   const [tab, setTab] = useState<InventoryTab>('stock');
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<InventoryItem[]>([]);
@@ -60,7 +62,7 @@ export function InventoryView({ onImport, canManage, isKitchen = false }: { onIm
       </div>
 
       <div className="inventory-tabs" role="tablist" aria-label="Secciones de inventario">
-        {tabs.filter((option) => canManage || (option.value !== 'recipes' && (option.value !== 'cook' || isKitchen))).map((option) => (
+        {tabs.filter((option) => (canManage || (option.value !== 'recipes' && (option.value !== 'cook' || isKitchen))) && (option.value !== 'alerts' || canSeeAlerts)).map((option) => (
           <button
             key={option.value}
             type="button"
@@ -83,6 +85,7 @@ export function InventoryView({ onImport, canManage, isKitchen = false }: { onIm
       {loaded && canManage && tab === 'recipes' && <RecipesTab key={recipesVersion} items={items} />}
       {loaded && (canManage || isKitchen) && tab === 'cook' && <PreparationsTab items={items} onChanged={loadInventory} restricted={!canManage} />}
       {loaded && tab === 'shopping' && <ShoppingTab items={items} />}
+      {canSeeAlerts && tab === 'alerts' && <FreshnessTab />}
       {recipeImportOpen && (
         <RecipeImportDialog
           onClose={() => setRecipeImportOpen(false)}

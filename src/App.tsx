@@ -46,6 +46,7 @@ import { useDashboardData, methodLabels } from '@/lib/dashboardData';
 import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
 import { OfflineStatusBar } from '@/components/OfflineStatusBar';
 import { HoursView } from '@/components/horas/HoursView';
+import { fetchFreshness, type FreshnessRow } from '@/lib/freshness';
 import { SalesView } from '@/components/finanzas/SalesView';
 import { PurchasesExpensesView } from '@/components/finanzas/PurchasesExpensesView';
 import { ReportsView } from '@/components/finanzas/ReportsView';
@@ -349,7 +350,7 @@ function App() {
         {view === 'salon' && <SalonView />}
         {view === 'caja' && <CashierOrders />}
         {view === 'cocina' && <KitchenBoard />}
-        {view === 'inventario' && <InventoryView onImport={() => setImportOpen(true)} canManage={Boolean(profile && MANAGING_ROLES.includes(profile.role))} isKitchen={profile?.role === 'kitchen'} />}
+        {view === 'inventario' && <InventoryView onImport={() => setImportOpen(true)} canManage={Boolean(profile && MANAGING_ROLES.includes(profile.role))} isKitchen={profile?.role === 'kitchen'} canSeeAlerts={Boolean(profile && (MANAGING_ROLES.includes(profile.role) || profile.role === 'kitchen' || profile.role === 'inventory'))} />}
         {importOpen && <InventoryImportDialog onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); setView('inventario'); }} />}
         {menuImportOpen && profile && MANAGING_ROLES.includes(profile.role) && <MenuImportExportDialog onClose={() => setMenuImportOpen(false)} onImported={() => void loadCatalog()} />}
         {view === 'equipo' && session && profile && MANAGING_ROLES.includes(profile.role) && <TeamView currentUserId={session.user.id} callerRole={profile.role} />}
@@ -380,6 +381,11 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
   const displayName = profile?.display_name ?? 'Usuario';
   const canSeeSales = Boolean(profile && MANAGING_ROLES.includes(profile.role));
   const { data, loaded, reload } = useDashboardData();
+  const [stale, setStale] = useState<FreshnessRow[]>([]);
+  useEffect(() => {
+    if (!canSeeSales) return;
+    void fetchFreshness().then((result) => setStale(result.rows.filter((row: FreshnessRow) => row.level === 'alert')));
+  }, [canSeeSales]);
   const today = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const maxDay = Math.max(1, ...(data?.days.map((day: { total: number }) => day.total) ?? [0]));
   const points = (data?.days ?? []).map((day: { total: number }, index: number) => `${35 + index * 107.5},${200 - (day.total / maxDay) * 170}`);
@@ -402,6 +408,12 @@ function Dashboard({ profile, onNavigate }: DashboardProps) {
         <div className="panel chart-panel"><div className="panel-heading"><div><h2>Ventas últimos 7 días</h2><p className="muted">{data && data.days.some((day: { total: number }) => day.total > 0) ? 'Pagos recibidos por día' : 'Todavía no hay ventas en los últimos 7 días'}</p></div></div><div className="chart"><div className="chart-y">{data && data.days.some((day: { total: number }) => day.total > 0) ? <><span>{cop(maxDay)}</span><span>{cop(Math.round(maxDay * 2 / 3))}</span><span>{cop(Math.round(maxDay / 3))}</span><span>0</span></> : <><span /><span /><span /><span>0</span></>}</div><svg viewBox="0 0 700 220" role="img" aria-label="Ventas de los últimos siete días"><defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#f0b4a5" stopOpacity=".45" /><stop offset="100%" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>{area && <path d={area} fill="url(#chart-fill)" />}{line && <path d={line} fill="none" stroke="#d9593b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}</svg></div><div className="chart-days">{(data?.days ?? []).map((day: { label: string }) => <span key={day.label}>{day.label}</span>)}</div></div>
         <div className="panel payments-panel"><div className="panel-heading"><div><h2>Cómo te pagaron hoy</h2><p className="muted">Por medio de pago</p></div><WalletCards size={17} color="#9ba8a1" /></div>{(data?.byMethod ?? []).length === 0 ? <p className="muted">Todavía no hay pagos hoy.</p> : (data?.byMethod ?? []).map((row: { method: string; total: number }, index: number) => <PaymentRow key={row.method} label={methodLabels[row.method] ?? row.method} value={cop(row.total)} percentage={`${Math.round((row.total / methodTotal) * 100)}%`} color={paymentColors[index % paymentColors.length]} />)}</div>
       </section>
+      {stale.length > 0 && (
+        <div className="auth-feedback error" role="alert" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+          <span><strong>{stale.length} {stale.length === 1 ? 'insumo se está apichando' : 'insumos se están apichando'}:</strong> {stale.slice(0, 4).map((row: FreshnessRow) => row.name).join(', ')}{stale.length > 4 ? '…' : ''}. Haz promoción o úsalos ya.</span>
+          <button className="outline-button" type="button" onClick={() => onNavigate('inventario')}>Ver en Inventario &gt; Alertas</button>
+        </div>
+      )}
       <div className="section-title"><h2>Ahora mismo</h2><span>{loaded ? 'Actualizado al abrir esta pantalla' : 'Cargando…'}</span></div>
       <section className="quick-grid"><QuickCard icon={<ShoppingBag size={17} />} label="Pedidos abiertos" value={String(data?.openOrders ?? 0)} action="Ir a pedidos" onClick={() => onNavigate('carta')} /><QuickCard icon={<Utensils size={17} />} label="Mesas ocupadas" value={`${data?.occupiedTables ?? 0} / ${data?.totalTables ?? 0}`} action="Ir a mesas" onClick={() => onNavigate('salon')} /><QuickCard icon={<Clock3 size={17} />} label="Tickets en cocina" value={String(data?.openOrders ?? 0)} action="Ver cocina" onClick={() => onNavigate('cocina')} /><QuickCard icon={<Boxes size={17} />} label="Insumos en alerta" value={String(data?.lowStock ?? 0)} action="Ver inventario" onClick={() => onNavigate('inventario')} /></section>
     </div>
