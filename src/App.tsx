@@ -14,6 +14,7 @@ import {
   LogIn,
   LogOut,
   MapPin,
+  Megaphone,
   Menu as MenuIcon,
   Minus,
   Plus,
@@ -51,6 +52,7 @@ import { fetchInsights } from '@/lib/assistant';
 import { SalesView } from '@/components/finanzas/SalesView';
 import { PurchasesExpensesView } from '@/components/finanzas/PurchasesExpensesView';
 import { ReportsView } from '@/components/finanzas/ReportsView';
+import { MarketingView } from '@/components/marketing/MarketingView';
 import { ShiftPill } from '@/components/horas/ShiftPill';
 import { DeviceGate } from '@/components/horas/DeviceGate';
 import { useWorkTracking } from '@/lib/useWorkTracking';
@@ -60,7 +62,7 @@ import { addSale, newClientId, removeSale, methodLabel, type OfflineMethod, type
 import { useConnectivity, useOfflineSales } from '@/lib/offline/useOffline';
 import { cartItems, cartKey, cartQuantityOfProduct, choiceNames, parseCartKey, useProductOptions, type ProductOptionMap } from '@/lib/productOptions';
 
-type View = 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo' | 'horas' | 'ventas' | 'gastos' | 'reportes';
+type View = 'marketing' | 'inicio' | 'salon' | 'carta' | 'caja' | 'cocina' | 'inventario' | 'perfil' | 'equipo' | 'horas' | 'ventas' | 'gastos' | 'reportes';
 
 type Product = {
   id: string;
@@ -326,6 +328,7 @@ function App() {
           <NavButton icon={<MenuIcon size={17} />} label="Carta" active={view === 'carta'} onClick={() => setView('carta')} />
           <NavButton icon={<Boxes size={17} />} label="Inventario" active={view === 'inventario'} onClick={() => setView('inventario')} />
           <p className="nav-label">Relaciones</p>
+          {profile && (MANAGING_ROLES.includes(profile.role) || profile.role === 'marketing') && <NavButton icon={<Megaphone size={17} />} label="Marketing" active={view === 'marketing'} onClick={() => setView('marketing')} />}
           <NavButton icon={<Users size={17} />} label="Clientes" active={false} onClick={() => setView('inicio')} />
           <p className="nav-label">Administración</p>
           {profile && MANAGING_ROLES.includes(profile.role) && <NavButton icon={<Users size={17} />} label="Equipo" active={view === 'equipo'} onClick={() => setView('equipo')} />}
@@ -343,7 +346,7 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark">N</span>Nexora</div>
-          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : view === 'horas' ? 'Horas' : view === 'ventas' ? 'Ventas' : view === 'gastos' ? 'Compras y gastos' : view === 'reportes' ? 'Reportes' : 'Carta y pedidos'}</strong></div>
+          <div className="breadcrumb"><span>Laureles</span><span>/</span><strong>{view === 'inicio' ? 'Inicio' : view === 'salon' ? 'Salón' : view === 'caja' ? 'Caja' : view === 'cocina' ? 'Cocina' : view === 'inventario' ? 'Inventario' : view === 'perfil' ? 'Mi perfil' : view === 'equipo' ? 'Equipo' : view === 'horas' ? 'Horas' : view === 'ventas' ? 'Ventas' : view === 'gastos' ? 'Compras y gastos' : view === 'reportes' ? 'Reportes' : view === 'marketing' ? 'Marketing' : 'Carta y pedidos'}</strong></div>
           <div className="topbar-actions"><button className="icon-button" type="button" aria-label="Notificaciones"><Bell size={18} /></button><span className="language">ES</span><span className="avatar">{(profile?.display_name?.slice(0, 2) ?? 'MA').toUpperCase()}</span></div>
         </header>
 
@@ -359,6 +362,7 @@ function App() {
         {view === 'ventas' && profile && MANAGING_ROLES.includes(profile.role) && <SalesView />}
         {view === 'gastos' && profile && MANAGING_ROLES.includes(profile.role) && <PurchasesExpensesView />}
         {view === 'reportes' && profile && MANAGING_ROLES.includes(profile.role) && <ReportsView onOpenSales={() => setView('ventas')} />}
+        {view === 'marketing' && profile && (MANAGING_ROLES.includes(profile.role) || profile.role === 'marketing') && <MarketingView canApprove={MANAGING_ROLES.includes(profile.role)} />}
         {view === 'perfil' && <ProfileScreen profile={profile} session={session} onProfileUpdated={setProfile} onSignOut={signOutNow} />}
         <OfflineStatusBar online={online} sales={offlineSales.sales} syncing={offlineSales.syncing} onSync={() => void offlineSales.syncNow()} onDiscard={(clientId: string) => { removeSale(clientId); offlineSales.refresh(); }} />
         {dataError && <div className="data-notice" role="alert">{dataError}</div>}

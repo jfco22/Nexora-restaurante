@@ -1,0 +1,26 @@
+.mkt-view { padding: 4px 0 40px; }
+.mkt-head h2 { margin: 0 0 4px; }
+.mkt-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.mkt-tabs .chip { padding: 8px 14px; border: 1px solid #e0e5df; border-radius: 999px; background: #fff; color: #27312d; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.mkt-tabs .chip.active { color: #fff; background: #d9593b; border-color: #d9593b; }
+.mkt-list { display: grid; gap: 14px; }
+.mkt-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid #e8ece7; border-radius: 14px; background: #fff; }
+.mkt-card p { margin: 4px 0 0; }
+.mkt-warn { color: #b3321b; }
+.mkt-post { display: grid; grid-template-columns: 220px 1fr; gap: 16px; padding: 14px; border: 1px solid #e8ece7; border-radius: 14px; background: #fff; }
+.mkt-preview canvas { width: 100%; height: auto; border-radius: 10px; background: #2b1810; display: block; }
+.mkt-body { display: grid; gap: 8px; min-width: 0; }
+.mkt-body header { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.mkt-body label { display: grid; gap: 4px; font-size: .8rem; color: #68756d; }
+.mkt-body input, .mkt-body textarea { padding: 8px 10px; border: 1px solid #e0e5df; border-radius: 10px; font: inherit; font-size: .9rem; color: #27312d; }
+.mkt-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mkt-reject { display: flex; gap: 8px; flex-wrap: wrap; }
+.mkt-reject input { flex: 1; min-width: 180px; }
+.mkt-status { padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; background: #f0f3ef; color: #4b5a52; }
+.mkt-status.draft { background: #fff3d6; color: #8a5a00; }
+.mkt-status.approved { background: #dcf3e4; color: #1f7a44; }
+.mkt-status.rejected { background: #fde4df; color: #b3321b; }
+.mkt-replies summary { cursor: pointer; font-weight: 600; }
+.mkt-replies p { margin: 2px 0 8px; }
+@media (max-width: 640px) { .mkt-post { grid-template-columns: 1fr; } .mkt-preview { max-width: 240px; } }
+.mkt-view .link-button { border: 0; background: none; color: #d9593b; font: inherit; font-weight: 600; cursor: pointer; padding: 0 0 0 6px; }
