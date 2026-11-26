@@ -24,3 +24,13 @@
 .mkt-replies p { margin: 2px 0 8px; }
 @media (max-width: 640px) { .mkt-post { grid-template-columns: 1fr; } .mkt-preview { max-width: 240px; } }
 .mkt-view .link-button { border: 0; background: none; color: #d9593b; font: inherit; font-weight: 600; cursor: pointer; padding: 0 0 0 6px; }
+.mkt-publish { display: grid; gap: 8px; padding: 10px 12px; border: 1px dashed #e0b8a8; border-radius: 12px; background: #fff8f4; }
+.mkt-check { display: flex !important; flex-direction: row !important; align-items: center; gap: 8px !important; color: #27312d !important; font-size: .9rem !important; }
+.mkt-check input { padding: 0; }
+.mkt-ok { color: #1f7a44; margin: 0; }
+.mkt-conn { display: grid; gap: 12px; max-width: 760px; }
+.mkt-conn ol { padding-left: 20px; display: grid; gap: 8px; }
+.mkt-conn code { background: #f0f3ef; padding: 1px 6px; border-radius: 6px; font-size: .85rem; }
+.mkt-conn label { display: grid; gap: 4px; font-size: .8rem; color: #68756d; }
+.mkt-conn input { padding: 8px 10px; border: 1px solid #e0e5df; border-radius: 10px; font: inherit; font-size: .9rem; }
+.mkt-pages { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -47,6 +47,10 @@ where id = (select id from auth.users where email = 'CORREO-DEL-PROPIETARIO');
 
 El código está en `supabase/functions/create-staff-user/index.ts`. Se despliega en *Edge Functions* de Supabase con el nombre `create-staff-user` y con **Verify JWT desactivado** (la función valida la sesión por su cuenta). Subir cambios a GitHub **no** la despliega: hay que desplegarla en Supabase.
 
+## Función para publicar en Facebook e Instagram
+
+El código está en `supabase/functions/meta-publish/index.ts`. Se despliega en *Edge Functions* de Supabase con el nombre `meta-publish` y con **Verify JWT desactivado** (la función valida la sesión). Antes hay que correr el SQL `20261202000000_add_nexora_meta_connection.sql`. Opcionalmente se puede fijar la versión de la API de Meta con la variable `META_GRAPH_VERSION` (por defecto `v25.0`). La conexión se hace desde la app en *Marketing → Conexión con Meta*.
+
 ## Publicación en Cloudflare Pages
 
 | Campo | Valor |

@@ -7,9 +7,11 @@ import {
 } from '@/lib/marketing';
 import { buildPostCopy, buildStoryCopy, quickReplies } from '@/lib/marketingCopy';
 import { drawPiece } from '@/lib/marketingPiece';
+import { MetaConnection } from '@/components/marketing/MetaConnection';
+import { fetchMetaStatus, publishToMeta, type MetaStatus } from '@/lib/meta';
 import '@/components/marketing/marketing.css';
 
-type Tab = 'crear' | 'piezas';
+type Tab = 'crear' | 'piezas' | 'conexion';
 
 export function MarketingView({ canApprove }: { canApprove: boolean }) {
   const [tab, setTab] = useState<Tab>('piezas');
@@ -17,6 +19,10 @@ export function MarketingView({ canApprove }: { canApprove: boolean }) {
   const [posts, setPosts] = useState<MarketingPost[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [meta, setMeta] = useState<MetaStatus | null>(null);
+
+  const loadMeta = useCallback(async () => { const r = await fetchMetaStatus(); setMeta(r.data ?? { connected: false }); }, []);
+  useEffect(() => { void loadMeta(); }, [loadMeta]);
 
   const load = useCallback(async () => {
     const [c, p] = await Promise.all([fetchCandidates(), fetchPosts()]);
@@ -56,6 +62,7 @@ export function MarketingView({ canApprove }: { canApprove: boolean }) {
       <div className="mkt-tabs">
         <button type="button" className={`chip ${tab === 'piezas' ? 'active' : ''}`} onClick={() => setTab('piezas')}>Piezas{pending > 0 ? ` (${pending} por aprobar)` : ''}</button>
         <button type="button" className={`chip ${tab === 'crear' ? 'active' : ''}`} onClick={() => setTab('crear')}>Crear desde promociones</button>
+        <button type="button" className={`chip ${tab === 'conexion' ? 'active' : ''}`} onClick={() => setTab('conexion')}>Conexión con Meta{meta?.connected ? (meta.healthy === false ? ' ⚠' : ' ✓') : ''}</button>
       </div>
       {error && <FormProblem message={error} />}
 
@@ -79,11 +86,13 @@ export function MarketingView({ canApprove }: { canApprove: boolean }) {
         </div>
       )}
 
+      {tab === 'conexion' && <MetaConnection status={meta} canManage={canApprove} onChanged={() => void loadMeta()} />}
+
       {tab === 'piezas' && (
         <div className="mkt-list">
           {posts.length === 0 && <p className="muted">Todavía no hay piezas. Créalas en la pestaña “Crear desde promociones”.</p>}
           {posts.map((p: MarketingPost) => (
-            <PostCard key={p.id} post={p} canApprove={canApprove} busy={busy === p.id} onAct={(action: () => Promise<string | null>) => act(p.id, action)} />
+            <PostCard key={p.id} post={p} canApprove={canApprove} meta={meta} onGoConnect={() => setTab('conexion')} busy={busy === p.id} onAct={(action: () => Promise<string | null>) => act(p.id, action)} />
           ))}
         </div>
       )}
@@ -91,7 +100,7 @@ export function MarketingView({ canApprove }: { canApprove: boolean }) {
   );
 }
 
-function PostCard({ post, canApprove, busy, onAct }: { post: MarketingPost; canApprove: boolean; busy: boolean; onAct: (action: () => Promise<string | null>) => Promise<boolean> }) {
+function PostCard({ post, canApprove, meta, onGoConnect, busy, onAct }: { post: MarketingPost; canApprove: boolean; meta: MetaStatus | null; onGoConnect: () => void; busy: boolean; onAct: (action: () => Promise<string | null>) => Promise<boolean> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [headline, setHeadline] = useState(post.headline);
   const [caption, setCaption] = useState(post.caption);
@@ -99,6 +108,9 @@ function PostCard({ post, canApprove, busy, onAct }: { post: MarketingPost; canA
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
+  const [targets, setTargets] = useState<{ instagram: boolean; facebook: boolean }>({ instagram: true, facebook: true });
+  const [publishing, setPublishing] = useState(false);
+  const [publishMessage, setPublishMessage] = useState<string | null>(null);
   const edited = headline !== post.headline || caption !== post.caption;
 
   useEffect(() => {
@@ -126,6 +138,21 @@ function PostCard({ post, canApprove, busy, onAct }: { post: MarketingPost; canA
 
   const copy = async (label: string, text: string): Promise<void> => {
     try { await navigator.clipboard.writeText(text); setCopied(label); } catch { setCopied(null); }
+  };
+
+  const publishNow = async (): Promise<void> => {
+    const selected = (['instagram', 'facebook'] as const).filter((t) => targets[t] && (t === 'facebook' || meta?.has_instagram));
+    const canvas = canvasRef.current;
+    if (!canvas || selected.length === 0) { setPublishMessage('Elige dónde publicar.'); return; }
+    setPublishing(true);
+    setPublishMessage(null);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const reply = await publishToMeta(post.id, selected, dataUrl.split(',')[1] ?? '');
+    setPublishing(false);
+    if (reply.error) setPublishMessage(reply.error);
+    else if (reply.data && !reply.data.ok) setPublishMessage(`Se publicó solo en parte. ${reply.data.error ?? ''} Puedes reintentar: lo ya publicado no se repite.`);
+    else setPublishMessage('¡Publicada!');
+    await onAct(async () => null);
   };
 
   const replies = quickReplies({ product: post.product_name, price: post.price_original_cop, promo: post.price_promo_cop, validTo: post.valid_to });
@@ -156,11 +183,29 @@ function PostCard({ post, canApprove, busy, onAct }: { post: MarketingPost; canA
             <>
               <button type="button" className="secondary-button" onClick={download}>Descargar imagen</button>
               <button type="button" className="secondary-button" onClick={() => void copy('texto', caption)}>{copied === 'texto' ? 'Texto copiado' : 'Copiar texto'}</button>
-              <button type="button" className="primary-button" disabled={busy} onClick={() => void onAct(() => publishPost(post.id))}>Ya la publiqué</button>
+              <button type="button" className="secondary-button" disabled={busy || publishing} onClick={() => void onAct(() => publishPost(post.id))}>Ya la publiqué a mano</button>
             </>
           )}
           {(post.status === 'draft' || post.status === 'rejected') && <button type="button" className="secondary-button" disabled={busy} onClick={() => void onAct(() => deletePost(post.id))}>Borrar</button>}
         </div>
+        {post.status === 'approved' && (
+          <div className="mkt-publish">
+            {meta?.connected && meta.healthy !== false ? (
+              <>
+                <label className="mkt-check"><input type="checkbox" checked={targets.instagram && Boolean(meta.has_instagram)} disabled={!meta.has_instagram} onChange={(e) => setTargets({ ...targets, instagram: e.target.checked })} /> Instagram{meta.ig_username ? ` (@${meta.ig_username})` : ''}</label>
+                <label className="mkt-check"><input type="checkbox" checked={targets.facebook} onChange={(e) => setTargets({ ...targets, facebook: e.target.checked })} /> Facebook{meta.page_name ? ` (${meta.page_name})` : ''}</label>
+                <button type="button" className="primary-button" disabled={publishing || busy} onClick={() => void publishNow()}>{publishing ? 'Publicando…' : post.kind === 'story' ? 'Publicar story ahora' : 'Publicar ahora'}</button>
+              </>
+            ) : (
+              <p className="muted">Para publicar con un clic, <button type="button" className="link-button" onClick={onGoConnect}>conecta Meta</button>.{meta?.healthy === false ? ' (La conexión actual falló.)' : ''}</p>
+            )}
+            {publishMessage && <p className={publishMessage === '¡Publicada!' ? 'mkt-ok' : 'mkt-warn'}>{publishMessage}</p>}
+            {!publishMessage && post.publish_error && <p className="mkt-warn">Último intento: {post.publish_error}</p>}
+          </div>
+        )}
+        {post.status === 'published' && post.publish_results && Object.entries(post.publish_results).filter(([, r]) => r.ok).map(([channel, r]) => (
+          <p key={channel} className="mkt-ok">Publicada en {channel === 'instagram' ? 'Instagram' : 'Facebook'}{r.permalink ? <> · <a href={r.permalink} target="_blank" rel="noreferrer">ver</a></> : null}</p>
+        ))}
         {post.status === 'draft' && !canApprove && <p className="muted">Está esperando la aprobación del propietario o del gerente.</p>}
         {rejecting && (
           <div className="mkt-reject">

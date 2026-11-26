@@ -11,6 +11,7 @@ export type MarketingPost = {
   id: string; kind: 'post' | 'story'; product_id: string; product_name: string; headline: string; caption: string;
   price_original_cop: number; price_promo_cop: number; valid_to: string; status: PostStatus; rejection_reason: string | null;
   created_at: string; approved_at: string | null; published_at: string | null;
+  publish_results: Record<string, { ok: boolean; id?: string; permalink?: string; error?: string }> | null; publish_error: string | null;
 };
 
 export const statusLabels: Record<PostStatus, string> = { draft: 'Por aprobar', approved: 'Aprobada', rejected: 'Rechazada', published: 'Publicada' };
