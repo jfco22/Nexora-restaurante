@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Clock, Megaphone, ShoppingBasket, TrendingUp } from 'lucide-react';
+import { PromotionsAdvisor } from '@/components/inventory/PromotionsAdvisor';
 import { FormProblem } from '@/components/FormProblem';
 import { formatCurrency } from '@/lib/format';
 import { fetchInsights, fetchPurchaseForecast, fetchSalesForecast, sendFeedback, type Insight, type PurchaseForecast, type SalesForecast } from '@/lib/assistant';
@@ -95,6 +96,8 @@ export function FreshnessTab({ canSeeSales = false }: { canSeeSales?: boolean })
           ))}
 
           {insights === null && <p className="muted">El asistente que predice y aprende todavía no está activado en la base de datos; mientras tanto se muestran las alertas simples.</p>}
+
+          <PromotionsAdvisor canManage={canSeeSales} />
 
           <section className="fresh-section">
             <h3><ShoppingBasket size={16} /> Qué comprar</h3>
