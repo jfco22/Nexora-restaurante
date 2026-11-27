@@ -29,7 +29,7 @@ import {
   X,
   Banknote,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { OPENED_FROM_RECOVERY_LINK, RECOVERY_LINK_PROBLEM, supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/format';
 import { SalonView } from '@/components/salon/SalonView';
 import { CashShiftPanel } from '@/components/caja/CashShiftPanel';
@@ -43,6 +43,7 @@ import { fetchOpenCashShift, formatOpenedAt, type CashShiftSummary } from '@/lib
 import { MANAGING_ROLES, roleLabels } from '@/lib/staffRoles';
 import { TeamView } from '@/components/equipo/TeamView';
 import { ForgotPasswordScreen } from '@/components/auth/ForgotPasswordScreen';
+import { PasswordForm, ResetPasswordScreen } from '@/components/auth/ResetPasswordScreen';
 import { useDashboardData, methodLabels } from '@/lib/dashboardData';
 import { OptionPickerDialog } from '@/components/salon/OptionPickerDialog';
 import { OfflineStatusBar } from '@/components/OfflineStatusBar';
@@ -114,7 +115,8 @@ function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [cashShift, setCashShift] = useState<CashShiftSummary | null>(null);
   const [cashPanelOpen, setCashPanelOpen] = useState(false);
-  const [forgotPassword, setForgotPassword] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(RECOVERY_LINK_PROBLEM);
+  const [recovering, setRecovering] = useState(OPENED_FROM_RECOVERY_LINK);
   const [importOpen, setImportOpen] = useState(false);
   const [menuImportOpen, setMenuImportOpen] = useState(false);
 
@@ -126,7 +128,8 @@ function App() {
     };
 
     void loadSession();
-    const { data: authSubscription } = supabase.auth.onAuthStateChange((_event, nextSession: Session | null) => {
+    const { data: authSubscription } = supabase.auth.onAuthStateChange((event, nextSession: Session | null) => {
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       setSession(nextSession);
       setAuthLoading(false);
       if (!nextSession) setProfile(null);
@@ -289,8 +292,9 @@ function App() {
 
   if (IS_MENU_LINK) return <GuestExperience products={products} options={productOptions} onSubmitOrder={submitOrder} />;
   if (authLoading) return <div className="auth-loading">Cargando Nexora...</div>;
+  if (session && recovering) return <ResetPasswordScreen onDone={() => { window.history.replaceState(null, '', window.location.pathname); setRecovering(false); }} />;
   if (!session && !guestMode && !forgotPassword) return <AuthScreen onGuestAccess={() => setGuestMode(true)} onForgotPassword={() => setForgotPassword(true)} />;
-  if (!session && forgotPassword) return <ForgotPasswordScreen onBack={() => setForgotPassword(false)} />;
+  if (!session && forgotPassword) return <ForgotPasswordScreen notice={RECOVERY_LINK_PROBLEM ? 'Ese enlace ya venció o ya se usó. Pide uno nuevo aquí abajo.' : undefined} onBack={() => setForgotPassword(false)} />;
   if (!session && guestMode) return <GuestExperience products={products} onSubmitOrder={submitOrder} />;
 
   const signOutNow = async (): Promise<void> => {
@@ -542,6 +546,7 @@ function ProfileScreen({ profile, session, onProfileUpdated, onSignOut }: Profil
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -569,7 +574,7 @@ function ProfileScreen({ profile, session, onProfileUpdated, onSignOut }: Profil
     await onSignOut();
   };
 
-  return <div className="page-wrap"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Mi perfil</h1><p className="muted">Personaliza tu nombre. Tu rol lo asigna un administrador.</p></div></div><div className="profile-screen"><section className="profile-card"><div className="profile-avatar-large">{(displayName?.slice(0, 2) ?? session?.user.email?.slice(0, 2) ?? 'NX').toUpperCase()}</div><div className="profile-info"><strong>{displayName || 'Usuario Nexora'}</strong><span className="profile-role-badge">{roleLabels[role] ?? 'Propietario'}</span><small>{session?.user.email ?? ''}</small></div></section><form className="profile-form" onSubmit={(event: React.FormEvent<HTMLFormElement>) => void handleSave(event)}><label>Nombre para mostrar<input value={displayName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value)} placeholder="Tu nombre" required /></label><p className="muted">Rol en el equipo: <strong>{roleLabels[role] ?? 'Propietario'}</strong></p>{error && <p className="auth-feedback error" role="alert">{error}</p>}{message && <p className="auth-feedback success" role="status">{message}</p>}<button className="primary-button" type="submit" disabled={busy}>{busy ? 'Guardando...' : 'Guardar cambios'}</button></form><button className="auth-switch" type="button" onClick={() => void handleSignOut()}>Cerrar sesión</button></div></div>;
+  return <div className="page-wrap"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Mi perfil</h1><p className="muted">Personaliza tu nombre. Tu rol lo asigna un administrador.</p></div></div><div className="profile-screen"><section className="profile-card"><div className="profile-avatar-large">{(displayName?.slice(0, 2) ?? session?.user.email?.slice(0, 2) ?? 'NX').toUpperCase()}</div><div className="profile-info"><strong>{displayName || 'Usuario Nexora'}</strong><span className="profile-role-badge">{roleLabels[role] ?? 'Propietario'}</span><small>{session?.user.email ?? ''}</small></div></section><form className="profile-form" onSubmit={(event: React.FormEvent<HTMLFormElement>) => void handleSave(event)}><label>Nombre para mostrar<input value={displayName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value)} placeholder="Tu nombre" required /></label><p className="muted">Rol en el equipo: <strong>{roleLabels[role] ?? 'Propietario'}</strong></p>{error && <p className="auth-feedback error" role="alert">{error}</p>}{message && <p className="auth-feedback success" role="status">{message}</p>}<button className="primary-button" type="submit" disabled={busy}>{busy ? 'Guardando...' : 'Guardar cambios'}</button></form><div className="profile-form"><strong>Cambiar contraseña</strong>{passwordChanged && <p className="auth-feedback success" role="status">Contraseña actualizada.</p>}<PasswordForm submitLabel="Cambiar contraseña" onDone={() => setPasswordChanged(true)} /></div><button className="auth-switch" type="button" onClick={() => void handleSignOut()}>Cerrar sesión</button></div></div>;
 }
 
 export default App;

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-type ForgotPasswordScreenProps = { onBack: () => void };
+type ForgotPasswordScreenProps = { onBack: () => void; notice?: string };
 
-export function ForgotPasswordScreen({ onBack }: ForgotPasswordScreenProps) {
+export function ForgotPasswordScreen({ onBack, notice }: ForgotPasswordScreenProps) {
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -37,6 +37,7 @@ export function ForgotPasswordScreen({ onBack }: ForgotPasswordScreenProps) {
         <h1>¿Olvidaste tu contraseña?</h1>
         <p className="auth-description">Te enviaremos un enlace al correo registrado para que elijas una nueva contraseña.</p>
 
+        {notice && <div className="auth-feedback error" role="alert">{notice}</div>}
         {sent ? (
           <div className="auth-feedback success" role="status">
             Si el correo está registrado, recibirás un enlace para restablecer tu contraseña en unos minutos. Revisa tu bandeja y la carpeta de spam.
